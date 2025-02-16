@@ -1,0 +1,296 @@
+import { useState, useEffect, useRef } from "react";
+import { Text, View, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet, RefreshControl, Animated, Modal, TextInput, Linking, Alert, NativeSyntheticEvent, NativeScrollEvent } from "react-native";
+import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationProp } from '@react-navigation/native';
+import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
+import { Suspense } from 'react';
+import NoteItem from './NoteItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// @ts-ignore-next-line
+import SwipeableFlatList from 'react-native-swipeable-list';
+
+interface Note {
+  id: number;
+  title: string;
+  description: string;
+  tags?: string;
+}
+
+const Stack = createStackNavigator();
+
+interface IndexProps {
+  readonly navigation: NavigationProp<any, any>;
+}
+
+async function initializeDatabase(db: any) {
+  await db.execAsync('PRAGMA journal_mode = WAL');
+  const tableInfo = await db.getAllAsync('PRAGMA table_info(notes)');
+  const columns = tableInfo.map((col: any) => col.name);
+
+  if (!columns.includes('title') || !columns.includes('tags')) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS notes_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        description TEXT,
+        tags TEXT
+      );
+    `);
+
+    if (columns.includes('description')) {
+      await db.execAsync(`
+        INSERT INTO notes_new (id, description)
+        SELECT id, description FROM notes;
+      `);
+    }
+
+    await db.execAsync('DROP TABLE IF EXISTS notes');
+    await db.execAsync('ALTER TABLE notes_new RENAME TO notes');
+  }
+}
+
+const SELECTED_NOTES_KEY = '@selected_notes';
+
+function NotesScreen({ navigation }: IndexProps) {
+  const db = useSQLiteContext();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [selectedNotes, setSelectedNotes] = useState<number[]>([]);
+
+  useEffect(() => {
+    loadSelectedNotes();
+  }, []);
+
+  const loadSelectedNotes = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(SELECTED_NOTES_KEY);
+      if (saved) {
+        setSelectedNotes(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Error loading selected notes:', error);
+    }
+  };
+
+  const toggleNoteSelection = async (noteId: number) => {
+    const newSelected = selectedNotes.includes(noteId)
+      ? selectedNotes.filter(id => id !== noteId)
+      : [...selectedNotes, noteId];
+    
+    setSelectedNotes(newSelected);
+    try {
+      await AsyncStorage.setItem(SELECTED_NOTES_KEY, JSON.stringify(newSelected));
+    } catch (error) {
+      console.error('Error saving selected notes:', error);
+    }
+  };
+
+  const silentLoadNotes = async () => {
+    try {
+      const result = await db.getAllAsync('SELECT * FROM notes ORDER BY title ASC');
+      // Only update if the data has actually changed
+      if (JSON.stringify(result) !== JSON.stringify(notes)) {
+        setNotes(result as Note[]);
+      }
+    } catch (error) {
+      console.error('Error loading notes:', error);
+    }
+  };
+
+  const loadNotes = async () => {
+    setLoading(true);
+    try {
+      const result = await db.getAllAsync('SELECT * FROM notes ORDER BY title ASC');
+      setNotes(result as Note[]);
+    } catch (error) {
+      console.error('Error loading notes:', error);
+      setError('Failed to load notes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial load
+    loadNotes();
+    
+    // Set up silent updates
+    const intervalId = setInterval(silentLoadNotes, 5000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadNotes();
+    setRefreshing(false);
+  };
+
+  const addNote = async () => {
+    if (newNote.trim()) {
+      setLoading(true);
+      try {
+        const result = await db.runAsync(
+          'INSERT INTO notes (title) VALUES (?)',
+          [newNote]
+        );
+        const newNoteItem = {
+          id: result.lastInsertRowId,
+          title: newNote,
+          description: ""
+        };
+        setNotes([...notes, newNoteItem]);
+        setNewNote("");
+        setModalVisible(false);
+      } catch (error) {
+        console.error('Error adding note:', error);
+        setError('Failed to add note');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const groupNotesByTag = (notes: Note[]) => {
+    const groupedNotes: { [tag: string]: Note[] } = {};
+    notes.forEach(note => {
+      const tags = note.tags ? note.tags.split(',') : ['Untagged'];
+      tags.forEach(tag => {
+        if (!groupedNotes[tag]) {
+          groupedNotes[tag] = [];
+        }
+        groupedNotes[tag].push(note);
+      });
+    });
+    return groupedNotes;
+  };
+
+  const groupedNotes = groupNotesByTag(notes);
+
+  const renderQuickActions = (note: Note) => {
+    return (
+      <View style={styles.quickActions}>
+        <TouchableOpacity
+          style={styles.quickActionButton}
+          onPress={() => deleteNote(note.id)}
+        >
+          <Text style={styles.quickActionText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const deleteNote = async (noteId: number) => {
+    Alert.alert(
+      "Delete Note",
+      "Are you sure you want to delete this note?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await db.runAsync('DELETE FROM notes WHERE id = ?', [noteId]);
+              setNotes(notes.filter(note => note.id !== noteId));
+            } catch (error) {
+              console.error('Error deleting note:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {!!error && <Text style={styles.error}>{error}</Text>}
+      {loading ? (
+        <ActivityIndicator style={styles.loader} />
+      ) : (
+        <SwipeableFlatList
+          style={{ marginTop: 20 }}
+          data={notes}
+          renderItem={({ item: note }: { item: Note }) => (
+            <NoteItem 
+              key={note.id} 
+              note={note}
+              isSelected={selectedNotes.includes(note.id)}
+              onToggleSelect={toggleNoteSelection}
+            />
+          )}
+          keyExtractor={(note: Note) => note.id.toString()}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          renderQuickActions={({ item }: { item: Note }) => renderQuickActions(item)}
+          maxSwipeDistance={80}
+          onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            scrollY.setValue(event.nativeEvent.contentOffset.y);
+          }}
+        />
+      )}
+      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.buttonText}>Add</Text>
+      </TouchableOpacity>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Add New Note</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="New note"
+              placeholderTextColor="rgba(136, 186, 234, 0.5)" // Dark Cerulean at 50% opacity
+              value={newNote}
+              onChangeText={setNewNote}
+            />
+            <TouchableOpacity style={styles.modalButton} onPress={addNote} disabled={loading}>
+              {loading ? <ActivityIndicator /> : <Text style={styles.buttonText}>Add</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <TouchableOpacity style={styles.footer} onPress={() => Linking.openURL('https://www.linkedin.com/in/tyrece-mclean-676a09259/')}>
+        <Text style={styles.footerText}>Follow us on LinkedIn</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+export default function App() {
+  return (
+    <Stack.Navigator initialRouteName="Index">
+      <Stack.Screen 
+        name="Index" 
+        component={NotesScreen} 
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <ActivityIndicator size="large" color="#88baea" />
+      <Text style={{ color: '#88baea', marginTop: 10 }}>Loading database...</Text>
+    </View>
+  );
+}
+
