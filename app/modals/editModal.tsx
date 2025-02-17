@@ -1,123 +1,60 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, Button, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSQLiteContext } from 'expo-sqlite';
 
-interface ModalFormProps {
+interface EditModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
+  formData: any;
   onFormSubmit: (formData: any) => void;
 }
 
-const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, onFormSubmit }) => {
+const EditModal: React.FC<EditModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
   const db = useSQLiteContext();
-  const [formData, setFormData] = useState({
-    exploitants: '',
-    arrivalTime: new Date(),
-    departureTime: null, // Set departureTime to null
-    passengers: null, // Set passengers to null
-    observations: null, // Set observations to null
-  });
+  const [editData, setEditData] = useState(formData);
+
+  useEffect(() => {
+    setEditData(formData);
+  }, [formData]);
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [isArrivalTimePickerVisible, setArrivalTimePickerVisibility] = useState(false);
+  const [isDepartureTimePickerVisible, setDepartureTimePickerVisibility] = useState(false);
   const exploitantsOptions = ['111', '123', '138', '145', '159'];
 
-  const [errors, setErrors] = useState({
-    exploitants: '',
-    arrivalTime: '',
-  });
-
-  const validateForm = () => {
-    let valid = true;
-    let newErrors = { exploitants: '', arrivalTime: '' };
-
-    if (!formData.exploitants) {
-      newErrors.exploitants = 'Exploitants is required';
-      valid = false;
-    }
-    if (!formData.arrivalTime) {
-      newErrors.arrivalTime = 'Arrival time is required';
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
-  };
-
   const handleInputChange = (name: string, value: any) => {
-    setFormData({ ...formData, [name]: value });
+    setEditData({ ...editData, [name]: value });
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
     try {
+      const { id, exploitants, arrivalTime, departureTime, passengers, observations } = editData;
+      const arrivalTimeISO = new Date(arrivalTime).toISOString();
+      const departureTimeISO = new Date(departureTime).toISOString();
       try {
-        await db.execAsync(`
-          CREATE TABLE IF NOT EXISTS Transport_rotation_fiche (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exploitants TEXT,
-            arrivalTime TEXT,
-            departureTime TEXT,
-            passengers TEXT,
-            observations TEXT
-          );
-        `);
-      } catch (error) {
-        console.error('Error creating table', error);
-        alert('An error occurred while creating the table. Please try again.');
-        return;
-      }
-
-      const { exploitants, arrivalTime } = formData;
-      try {
-        console.log('Inserting data:', {
-          exploitants,
-          arrivalTime: arrivalTime.toISOString(),
-          departureTime: null, // Set departureTime to null
-          passengers: null, // Set passengers to null
-          observations: null // Set observations to null
-        });
         await db.runAsync(
-          'INSERT INTO Transport_rotation_fiche (exploitants, arrivalTime, departureTime, passengers, observations) VALUES (?, ?, ?, ?, ?)',
-          [exploitants, arrivalTime.toISOString(), null, null, null]
+          'UPDATE Transport_rotation_fiche SET exploitants = ?, arrivalTime = ?, departureTime = ?, passengers = ?, observations = ? WHERE id = ?',
+          [exploitants, arrivalTimeISO, departureTimeISO, passengers, observations, id]
         );
       } catch (error) {
-        console.error('Error inserting data', error);
-        alert('An error occurred while inserting data. Please try again.');
+        console.error('Error updating data', error);
+        alert('An error occurred while updating data. Please try again.');
         return;
       }
 
-      console.log('Data saved successfully');
-      console.log('Saved Data:', formData); // Log the data
-      onFormSubmit(formData);
+      console.log('Data updated successfully');
+      onFormSubmit(editData);
 
       try {
-        const allData: any = await db.getAllAsync('SELECT * FROM Transport_rotation_fiche');
+        const allData = await db.getAllAsync('SELECT * FROM Transport_rotation_fiche');
         console.log('All Data in Transport_rotation_fiche:', allData);
-
-        if (Array.isArray(allData)) {
-          console.log('allData is an array with length:', allData.length);
-          if (allData.length > 0) {
-            console.log('First element of allData:', allData[0]);
-            alert('Data fetched successfully');
-          } else {
-            console.error('allData array is empty');
-            alert('No data found.');
-          }
-        } else {
-          console.error('allData is not an array');
-          alert('No data found.');
-        }
       } catch (error) {
         console.error('Error fetching all data', error);
-        alert('An error occurred while fetching data. Please try again.');
       }
     } catch (error) {
-      console.error('Error saving data', error);
-      alert('An error occurred while saving data. Please try again.');
+      console.error('Error updating data', error);
+      alert('An error occurred while updating data. Please try again.');
     }
     setModalVisible(false);
   };
@@ -135,8 +72,17 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
     hideArrivalTimePicker();
   };
 
-  const isFormValid = () => {
-    return formData.exploitants && formData.arrivalTime;
+  const showDepartureTimePicker = () => {
+    setDepartureTimePickerVisibility(true);
+  };
+
+  const hideDepartureTimePicker = () => {
+    setDepartureTimePickerVisibility(false);
+  };
+
+  const handleDepartureTimeConfirm = (date: Date) => {
+    handleInputChange('departureTime', date);
+    hideDepartureTimePicker();
   };
 
   return (
@@ -149,7 +95,7 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <Text style={styles.modalText}></Text>
+            <Text style={styles.modalText}>Edit Form</Text>
             <View style={styles.inputRow}>
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>N EXPLOITANTS</Text>
@@ -157,7 +103,7 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
                   style={styles.dropdown}
                   onPress={() => setDropdownVisible(!dropdownVisible)}
                 >
-                  <Text>{formData.exploitants || 'Select an option'}</Text>
+                  <Text>{editData.exploitants || 'Select an option'}</Text>
                 </TouchableOpacity>
                 {dropdownVisible && (
                   <View style={styles.dropdownList}>
@@ -175,7 +121,6 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
                     ))}
                   </View>
                 )}
-                {errors.exploitants ? <Text style={styles.errorText}>{errors.exploitants}</Text> : null}
               </View>
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>HEURE D'ARRIVEE</Text>
@@ -183,7 +128,7 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
                   style={styles.input}
                   onPress={showArrivalTimePicker}
                 >
-                  <Text>{formData.arrivalTime.toLocaleTimeString()}</Text>
+                  <Text>{new Date(editData.arrivalTime).toLocaleTimeString()}</Text>
                 </TouchableOpacity>
                 <DateTimePickerModal
                   isVisible={isArrivalTimePickerVisible}
@@ -191,10 +136,42 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
                   onConfirm={handleArrivalTimeConfirm}
                   onCancel={hideArrivalTimePicker}
                 />
-                {errors.arrivalTime ? <Text style={styles.errorText}>{errors.arrivalTime}</Text> : null}
               </View>
             </View>
-            <Button title="Submit" onPress={handleSubmit} disabled={!isFormValid()} />
+            <View style={styles.inputRow}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>HEURE DE DEPART</Text>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={showDepartureTimePicker}
+                >
+                  <Text>{new Date(editData.departureTime).toLocaleTimeString()}</Text>
+                </TouchableOpacity>
+                <DateTimePickerModal
+                  isVisible={isDepartureTimePickerVisible}
+                  mode="time"
+                  onConfirm={handleDepartureTimeConfirm}
+                  onCancel={hideDepartureTimePicker}
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>N PASSAGERS</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="N PASSAGERS"
+                  value={editData.passengers}
+                  onChangeText={(value) => handleInputChange('passengers', value)}
+                />
+              </View>
+            </View>
+            <Text style={[styles.label, { marginTop: 15 }]}>OBSERVATIONS/REMARQUES</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="OBSERVATIONS/REMARQUES"
+              value={editData.observations}
+              onChangeText={(value) => handleInputChange('observations', value)}
+            />
+            <Button title="Submit" onPress={handleSubmit} />
             <Button title="Close" onPress={() => setModalVisible(false)} />
           </View>
         </View>
@@ -228,7 +205,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    width: '80%',
+    width: '80%', // Adjust the width to make the modal smaller
   },
   modalText: {
     marginBottom: 15,
@@ -279,12 +256,6 @@ const styles = StyleSheet.create({
   dropdownItem: {
     padding: 10,
   },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 10,
-  },
 });
 
-export default ModalForm;
+export default EditModal;

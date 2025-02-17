@@ -2,21 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign } from '@expo/vector-icons'; 
 import ModalForm from './modals/modal';
+import EditModal from './modals/editModal';
+import ViewModal from './modals/viewModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SQLiteProvider } from 'expo-sqlite';
+import axios from 'axios';
+import * as SQLite from 'expo-sqlite';
 
 interface FormData {
   exploitants: string;
   arrivalTime: string;
-  departureTime: string;
-  passengers: string;
-  observations: string;
+  departureTime: string | null; // Allow departureTime to be null
+  passengers: string | null; // Allow passengers to be null
+  observations: string | null; // Allow observations to be null
   order?: number;
 }
 
 export default function Index() {
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<FormData[]>([]);
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [imageUris, setImageUris] = useState<{ [key: number]: string }>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,6 +41,21 @@ export default function Index() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchImageUris = async () => {
+      try {
+        const storedImageUris = await AsyncStorage.getItem('imageUris');
+        if (storedImageUris) {
+          setImageUris(JSON.parse(storedImageUris));
+        }
+      } catch (error) {
+        console.error('Error fetching image URIs', error);
+      }
+    };
+
+    fetchImageUris();
+  }, []);
+
   const handleFormSubmit = (newFormData: FormData) => {
     setData((prevData) => {
       const updatedData = [
@@ -42,6 +65,84 @@ export default function Index() {
       AsyncStorage.setItem('formData', JSON.stringify(updatedData));
       return updatedData;
     });
+  };
+
+  const handleRowSelect = (index: number) => {
+    setSelectedRow((prevSelectedRow) => (prevSelectedRow === index ? null : index));
+  };
+
+  const handleEditPress = () => {
+    setEditModalVisible(true);
+  };
+
+  const handleEditFormSubmit = (updatedFormData: FormData) => {
+    setData((prevData) => {
+      const updatedData = prevData.map((item, index) =>
+        index === selectedRow ? updatedFormData : item
+      );
+      AsyncStorage.setItem('formData', JSON.stringify(updatedData));
+      return updatedData;
+    });
+    setEditModalVisible(false);
+  };
+
+  const handleViewPress = (index: number) => {
+    setSelectedRow(index);
+    setViewModalVisible(true);
+  };
+
+  const handleCapture = (uri: string, index: number) => {
+    setImageUris((prevUris) => {
+      const updatedUris = {
+        ...prevUris,
+        [index]: uri,
+      };
+      AsyncStorage.setItem('imageUris', JSON.stringify(updatedUris));
+      return updatedUris;
+    });
+  };
+
+  const handlePublishToServer = async () => {
+    try {
+      const db = await SQLite.openDatabaseAsync('transport.db');
+  
+      await db.withTransactionAsync(async () => {
+        const result = await db.getFirstAsync('SELECT COUNT(*) FROM Transport_rotation_fiche');
+        
+        const countResult = (result as any).rows._array[0];
+        console.log('Count:', countResult['COUNT(*)']);
+  
+        const dataResult = await db.getAllAsync('SELECT * FROM Transport_rotation_fiche');
+  
+        let dataToPublish: any[] = [];
+  
+        if (dataResult && (dataResult as any).rows._array.length > 0) {
+          dataToPublish = (dataResult as any).rows._array;
+  
+          for (const row of dataToPublish) {
+            await axios.post('https://a417-194-3-170-45.ngrok-free.app/api/transport_rotation_fiche', row);
+          }
+          alert('Data published to server successfully');
+        } else {
+          console.error('No data found in Transport_rotation_fiche');
+          alert('No data found to publish.');
+        }
+      });
+    } catch (error) {
+      console.error('Error publishing data to server', error);
+      alert('An error occurred while publishing data to the server. Please try again.');
+    }
+  };
+
+  const handleDeleteAsyncStorage = async () => {
+    try {
+      await AsyncStorage.removeItem('formData');
+      setData([]);
+      alert('AsyncStorage data deleted successfully');
+    } catch (error) {
+      console.error('Error deleting AsyncStorage data', error);
+      alert('An error occurred while deleting AsyncStorage data. Please try again.');
+    }
   };
 
   return (
@@ -56,6 +157,8 @@ export default function Index() {
                 borderColor: "#000",
               }}
             >
+              <Text style={{ flex: 0.3, textAlign: "center" }}>SELECT</Text>
+              <View style={{ width: 1, backgroundColor: "#000" }} />
               <Text style={{ flex: 0.5, textAlign: "center" }}>N* D'ORDRE</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
               <Text style={{ flex: 1, textAlign: "center" }}>N EXPLOITANTS</Text>
@@ -73,12 +176,17 @@ export default function Index() {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <View style={[styles.row, { backgroundColor: index % 2 === 0 ? 'lightblue' : 'white' }]}>
+              <TouchableOpacity style={[styles.cell, { flex: 0.3 }]} onPress={() => handleRowSelect(index)}>
+                <Text>{selectedRow === index ? '✓' : ''}</Text>
+              </TouchableOpacity>
               <Text style={[styles.cell, { flex: 0.5 }]}>{item.order}</Text>
               <Text style={styles.cell}>{item.exploitants}</Text>
               <Text style={styles.cell}>{new Date(item.arrivalTime).toLocaleTimeString()}</Text>
-              <Text style={styles.cell}>{new Date(item.departureTime).toLocaleTimeString()}</Text>
+              <Text style={styles.cell}>{item.departureTime ? new Date(item.departureTime).toLocaleTimeString() : 'null'}</Text>
               <Text style={styles.cell}>{item.passengers}</Text>
-              <Text style={styles.cell}>{item.observations}</Text>
+              <TouchableOpacity style={[styles.cell, styles.centeredCell]} onPress={() => handleViewPress(index)}>
+                <Text>View</Text>
+              </TouchableOpacity>
             </View>
           )}
           contentContainerStyle={{
@@ -86,10 +194,35 @@ export default function Index() {
             padding: 20,
           }}
         />
+        {selectedRow !== null && (
+          <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
+            <AntDesign name="edit" size={24} color="white" />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
           <AntDesign name="plus" size={24} color="white" />
         </TouchableOpacity>
         <ModalForm modalVisible={modalVisible} setModalVisible={setModalVisible} onFormSubmit={handleFormSubmit} />
+        {selectedRow !== null && (
+          <EditModal
+            modalVisible={editModalVisible}
+            setModalVisible={setEditModalVisible}
+            formData={data[selectedRow]}
+            onFormSubmit={handleEditFormSubmit}
+          />
+        )}
+        {selectedRow !== null && (
+          <ViewModal
+            modalVisible={viewModalVisible}
+            setModalVisible={setViewModalVisible}
+            formData={data[selectedRow]}
+            imageUri={imageUris[selectedRow] || null}
+            onCapture={(uri) => handleCapture(uri, selectedRow)}
+          />
+        )}
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAsyncStorage}>
+          <Text style={styles.deleteButtonText}>Delete AsyncStorage</Text>
+        </TouchableOpacity>
       </View>
     </SQLiteProvider>
   );
@@ -107,6 +240,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  editButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 90,
+    backgroundColor: '#FFA500',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -117,5 +261,37 @@ const styles = StyleSheet.create({
   cell: {
     flex: 1,
     textAlign: 'center',
+  },
+  publishButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    backgroundColor: '#28a745',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+  },
+  publishButtonText: {
+    color: 'white',
+    marginLeft: 10,
+  },
+  deleteButton: {
+    position: 'absolute',
+    bottom: 90,
+    left: 20,
+    backgroundColor: '#dc3545',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: 'white',
+    marginLeft: 10,
+  },
+  centeredCell: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
