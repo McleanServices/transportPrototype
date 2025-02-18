@@ -13,19 +13,43 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="modals/modal" // This is the name of the page and must match the url from root
+          name="modals/modal" 
           options={{
             drawerLabel: 'modal',
             title: 'overview',
-            drawerItemStyle: { display: 'none' }, // Hide this screen
+            drawerItemStyle: { display: 'none' }, 
           }}
         />
         <Drawer.Screen
-          name="modals/editModal" // This is the name of the page and must match the url from root
+          name="modals/editModal" 
           options={{
             drawerLabel: 'modal',
             title: 'overview',
-            drawerItemStyle: { display: 'none' }, // Hide this screen
+            drawerItemStyle: { display: 'none' }, 
+          }}
+        />
+        <Drawer.Screen
+          name="modals/camera" 
+          options={{
+            drawerLabel: 'modal',
+            title: 'overview',
+            drawerItemStyle: { display: 'none' }, 
+          }}
+        />
+        <Drawer.Screen
+          name="modals/viewModal" 
+          options={{
+            drawerLabel: 'modal',
+            title: 'overview',
+            drawerItemStyle: { display: 'none' }, 
+          }}
+        />
+        <Drawer.Screen
+          name="modals/viewImagesModal" 
+          options={{
+            drawerLabel: 'modal',
+            title: 'overview',
+            drawerItemStyle: { display: 'none' }, 
           }}
         />
       </Drawer>

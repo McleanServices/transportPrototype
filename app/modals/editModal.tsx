@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSQLiteContext } from 'expo-sqlite';
 
@@ -86,97 +86,82 @@ const EditModal: React.FC<EditModalProps> = ({ modalVisible, setModalVisible, fo
   };
 
   return (
-    <View style={styles.container}>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>Edit Form</Text>
-            <View style={styles.inputRow}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>N EXPLOITANTS</Text>
-                <TouchableOpacity
-                  style={styles.dropdown}
-                  onPress={() => setDropdownVisible(!dropdownVisible)}
-                >
-                  <Text>{editData.exploitants || 'Select an option'}</Text>
-                </TouchableOpacity>
-                {dropdownVisible && (
-                  <View style={styles.dropdownList}>
-                    {exploitantsOptions.map((option) => (
-                      <TouchableOpacity
-                        key={option}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          handleInputChange('exploitants', option);
-                          setDropdownVisible(false);
-                        }}
-                      >
-                        <Text>{option}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}></Text>
+              <View style={styles.inputRow}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>N EXPLOITANTS</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={editData.exploitants}
+                    onChangeText={(text) => handleInputChange('exploitants', text)}
+                  />
+                </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>HEURE D'ARRIVEE</Text>
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={showArrivalTimePicker}
+                  >
+                    <Text>{new Date(editData.arrivalTime).toLocaleTimeString()}</Text>
+                  </TouchableOpacity>
+                  <DateTimePickerModal
+                    isVisible={isArrivalTimePickerVisible}
+                    mode="time"
+                    onConfirm={handleArrivalTimeConfirm}
+                    onCancel={hideArrivalTimePicker}
+                  />
+                </View>
               </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>HEURE D'ARRIVEE</Text>
-                <TouchableOpacity
-                  style={styles.input}
-                  onPress={showArrivalTimePicker}
-                >
-                  <Text>{new Date(editData.arrivalTime).toLocaleTimeString()}</Text>
-                </TouchableOpacity>
-                <DateTimePickerModal
-                  isVisible={isArrivalTimePickerVisible}
-                  mode="time"
-                  onConfirm={handleArrivalTimeConfirm}
-                  onCancel={hideArrivalTimePicker}
-                />
+              <View style={styles.inputRow}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>HEURE DE DEPART</Text>
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={showDepartureTimePicker}
+                  >
+                    <Text>{new Date(editData.departureTime).toLocaleTimeString()}</Text>
+                  </TouchableOpacity>
+                  <DateTimePickerModal
+                    isVisible={isDepartureTimePickerVisible}
+                    mode="time"
+                    onConfirm={handleDepartureTimeConfirm}
+                    onCancel={hideDepartureTimePicker}
+                  />
+                </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>N PASSAGERS</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="N PASSAGERS"
+                    value={editData.passengers}
+                    onChangeText={(value) => handleInputChange('passengers', value)}
+                  />
+                </View>
               </View>
+              <Text style={[styles.label, { marginTop: 15 }]}>OBSERVATIONS/REMARQUES</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="OBSERVATIONS/REMARQUES"
+                value={editData.observations}
+                onChangeText={(value) => handleInputChange('observations', value)}
+              />
+              <Button title="Submit" onPress={handleSubmit} />
+              <Button title="Close" onPress={() => setModalVisible(false)} />
             </View>
-            <View style={styles.inputRow}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>HEURE DE DEPART</Text>
-                <TouchableOpacity
-                  style={styles.input}
-                  onPress={showDepartureTimePicker}
-                >
-                  <Text>{new Date(editData.departureTime).toLocaleTimeString()}</Text>
-                </TouchableOpacity>
-                <DateTimePickerModal
-                  isVisible={isDepartureTimePickerVisible}
-                  mode="time"
-                  onConfirm={handleDepartureTimeConfirm}
-                  onCancel={hideDepartureTimePicker}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>N PASSAGERS</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="N PASSAGERS"
-                  value={editData.passengers}
-                  onChangeText={(value) => handleInputChange('passengers', value)}
-                />
-              </View>
-            </View>
-            <Text style={[styles.label, { marginTop: 15 }]}>OBSERVATIONS/REMARQUES</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="OBSERVATIONS/REMARQUES"
-              value={editData.observations}
-              onChangeText={(value) => handleInputChange('observations', value)}
-            />
-            <Button title="Submit" onPress={handleSubmit} />
-            <Button title="Close" onPress={() => setModalVisible(false)} />
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

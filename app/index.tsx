@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
-import { AntDesign } from '@expo/vector-icons'; 
+import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
 import ModalForm from './modals/modal';
 import EditModal from './modals/editModal';
 import ViewModal from './modals/viewModal';
@@ -24,7 +24,7 @@ export default function Index() {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
-  const [imageUris, setImageUris] = useState<{ [key: number]: string }>({});
+  const [imageUris, setImageUris] = useState<{ [key: number]: string[] }>({}); // Change to array of image URIs
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +46,13 @@ export default function Index() {
       try {
         const storedImageUris = await AsyncStorage.getItem('imageUris');
         if (storedImageUris) {
-          setImageUris(JSON.parse(storedImageUris));
+          const parsedImageUris = JSON.parse(storedImageUris);
+          if (Array.isArray(parsedImageUris)) {
+            console.log('Fetched imageUris:', parsedImageUris); // Debug log
+            setImageUris(parsedImageUris);
+          } else {
+            console.error('Fetched imageUris is not an array:', parsedImageUris);
+          }
         }
       } catch (error) {
         console.error('Error fetching image URIs', error);
@@ -95,8 +101,9 @@ export default function Index() {
     setImageUris((prevUris) => {
       const updatedUris = {
         ...prevUris,
-        [index]: uri,
+        [index]: [...(prevUris[index] || []), uri], // Append new image URI
       };
+      console.log('Updated imageUris:', updatedUris); // Debug log
       AsyncStorage.setItem('imageUris', JSON.stringify(updatedUris));
       return updatedUris;
     });
@@ -157,7 +164,7 @@ export default function Index() {
                 borderColor: "#000",
               }}
             >
-              <Text style={{ flex: 0.3, textAlign: "center" }}>SELECT</Text>
+              <FontAwesome name="pencil" size={20} style={{ flex: 0.3, textAlign: "center" }} /> {/* Replace Text with Icon */}
               <View style={{ width: 1, backgroundColor: "#000" }} />
               <Text style={{ flex: 0.5, textAlign: "center" }}>N* D'ORDRE</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
@@ -216,13 +223,13 @@ export default function Index() {
             modalVisible={viewModalVisible}
             setModalVisible={setViewModalVisible}
             formData={data[selectedRow]}
-            imageUri={imageUris[selectedRow] || null}
+            imageUris={imageUris[selectedRow] || []} // Pass array of image URIs
             onCapture={(uri) => handleCapture(uri, selectedRow)}
           />
         )}
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAsyncStorage}>
+        {/* <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAsyncStorage}>
           <Text style={styles.deleteButtonText}>Delete AsyncStorage</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </SQLiteProvider>
   );

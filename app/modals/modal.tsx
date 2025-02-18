@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, Button, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, Button, StyleSheet, TextInput } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSQLiteContext } from 'expo-sqlite';
 
@@ -102,7 +102,7 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
           console.log('allData is an array with length:', allData.length);
           if (allData.length > 0) {
             console.log('First element of allData:', allData[0]);
-            alert('Data fetched successfully');
+            // alert('Data fetched successfully');
           } else {
             console.error('allData array is empty');
             alert('No data found.');
@@ -153,28 +153,11 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
             <View style={styles.inputRow}>
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>N EXPLOITANTS</Text>
-                <TouchableOpacity
-                  style={styles.dropdown}
-                  onPress={() => setDropdownVisible(!dropdownVisible)}
-                >
-                  <Text>{formData.exploitants || 'Select an option'}</Text>
-                </TouchableOpacity>
-                {dropdownVisible && (
-                  <View style={styles.dropdownList}>
-                    {exploitantsOptions.map((option) => (
-                      <TouchableOpacity
-                        key={option}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          handleInputChange('exploitants', option);
-                          setDropdownVisible(false);
-                        }}
-                      >
-                        <Text>{option}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                <TextInput
+                  style={styles.input}
+                  value={formData.exploitants}
+                  onChangeText={(text) => handleInputChange('exploitants', text)}
+                />
                 {errors.exploitants ? <Text style={styles.errorText}>{errors.exploitants}</Text> : null}
               </View>
               <View style={styles.inputContainer}>

@@ -7,13 +7,18 @@ interface ViewModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
   formData: any;
-  imageUri: string | null;
+  imageUris: string[]; // Change to array of image URIs
   onCapture: (uri: string) => void;
 }
 
-const ViewModal: React.FC<ViewModalProps> = ({ modalVisible, setModalVisible, formData, imageUri, onCapture }) => {
+const ViewModal: React.FC<ViewModalProps> = ({ modalVisible, setModalVisible, formData, imageUris, onCapture }) => {
+  const [editData, setEditData] = useState(formData);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [viewImagesVisible, setViewImagesVisible] = useState(false);
+
+  const handleInputChange = (name: string, value: any) => {
+    setEditData({ ...editData, [name]: value });
+  };
 
   const handleCapture = (uri: string) => {
     onCapture(uri);
@@ -29,17 +34,17 @@ const ViewModal: React.FC<ViewModalProps> = ({ modalVisible, setModalVisible, fo
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>N* D'ORDRE: {formData.order} N EXPLOITANTS: {formData.exploitants}</Text>
+          <Text style={styles.modalText}>N* D'ORDRE: {editData.order} N EXPLOITANTS: {editData.exploitants}</Text>
           <View style={styles.row}>
             <TextInput
               style={styles.input}
-              value={formData.observations}
-              editable={false}
+              value={editData.observations}
+              onChangeText={(value) => handleInputChange('observations', value)}
             />
-            {imageUri ? (
+            {imageUris.length > 0 ? (
               <Image
                 style={styles.imagePlaceholder}
-                source={{ uri: imageUri }}
+                source={{ uri: imageUris[imageUris.length - 1] }} // Display the last captured image
               />
             ) : (
               <Image
@@ -59,7 +64,7 @@ const ViewModal: React.FC<ViewModalProps> = ({ modalVisible, setModalVisible, fo
       <ViewImagesModal
         modalVisible={viewImagesVisible}
         setModalVisible={setViewImagesVisible}
-        imageUri={imageUri}
+        imageUris={imageUris} // Pass array of image URIs
       />
     </Modal>
   );

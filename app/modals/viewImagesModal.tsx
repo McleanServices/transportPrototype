@@ -4,11 +4,19 @@ import { Modal, View, Text, Button, StyleSheet, FlatList, Image } from 'react-na
 interface ViewImagesModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
-  imageUri: string | null;
+  imageUris: string[]; // Change to array of image URIs
 }
 
-const ViewImagesModal: React.FC<ViewImagesModalProps> = ({ modalVisible, setModalVisible, imageUri }) => {
-  const images = imageUri ? [imageUri] : []; // Replace with actual logic to fetch all images for the specific row
+const ViewImagesModal: React.FC<ViewImagesModalProps> = ({ modalVisible, setModalVisible, imageUris }) => {
+  let extractedImageUris: string[] = [];
+  try {
+    // Extract the array from the object if necessary
+    extractedImageUris = Array.isArray(imageUris) ? imageUris : imageUris[0] || Object.values(imageUris)[0];
+  } catch (error) {
+    console.error('Error extracting image URIs:', error);
+  }
+
+  console.log('ViewImagesModal imageUris:', extractedImageUris); // Debug log
 
   return (
     <Modal
@@ -21,7 +29,7 @@ const ViewImagesModal: React.FC<ViewImagesModalProps> = ({ modalVisible, setModa
         <View style={styles.modalView}>
           <Text style={styles.modalText}>All Images</Text>
           <FlatList
-            data={images}
+            data={extractedImageUris}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => (
               <Image
@@ -29,6 +37,7 @@ const ViewImagesModal: React.FC<ViewImagesModalProps> = ({ modalVisible, setModa
                 source={{ uri: item }}
               />
             )}
+            contentContainerStyle={styles.imageList} // Add contentContainerStyle
           />
           <Button title="Close" onPress={() => setModalVisible(false)} />
         </View>
@@ -69,6 +78,11 @@ const styles = StyleSheet.create({
     height: 150,
     marginBottom: 10,
   },
+  imageList: {
+    alignItems: 'center', // Center the images
+  },
 });
 
 export default ViewImagesModal;
+
+// TODO: Fix error when fetched imageUris is not an array
