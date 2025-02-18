@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
-import ModalForm from './modals/modal';
-import EditModal from './modals/editModal';
-import ViewModal from './modals/viewModal';
+import ModalForm from '../modals/modal';
+import EditModal from '../modals/editModal';
+import ViewModal from '../modals/viewModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SQLiteProvider } from 'expo-sqlite';
 import axios from 'axios';
 import * as SQLite from 'expo-sqlite';
+import { useAuth } from '../../context/auth'; // Import useAuth
 
 interface FormData {
   exploitants: string;
@@ -18,13 +19,14 @@ interface FormData {
   order?: number;
 }
 
-export default function Index() {
+export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<FormData[]>([]);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [imageUris, setImageUris] = useState<{ [key: number]: string[] }>({}); // Change to array of image URIs
+  const { signOut } = useAuth(); // Get signOut function from useAuth
 
   useEffect(() => {
     const fetchData = async () => {
@@ -164,7 +166,7 @@ export default function Index() {
                 borderColor: "#000",
               }}
             >
-              <FontAwesome name="pencil" size={20} style={{ flex: 0.3, textAlign: "center" }} /> {/* Replace Text with Icon */}
+              <FontAwesome name="pencil" size={20} style={{ flex: 0.3, textAlign: "center" }} /> 
               <View style={{ width: 1, backgroundColor: "#000" }} />
               <Text style={{ flex: 0.5, textAlign: "center" }}>N* D'ORDRE</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
@@ -209,6 +211,9 @@ export default function Index() {
         <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
           <AntDesign name="plus" size={24} color="white" />
         </TouchableOpacity>
+        <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
+          <Text style={styles.signOutButtonText}>Sign Out</Text>
+        </TouchableOpacity>
         <ModalForm modalVisible={modalVisible} setModalVisible={setModalVisible} onFormSubmit={handleFormSubmit} />
         {selectedRow !== null && (
           <EditModal
@@ -227,9 +232,6 @@ export default function Index() {
             onCapture={(uri) => handleCapture(uri, selectedRow)}
           />
         )}
-        {/* <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAsyncStorage}>
-          <Text style={styles.deleteButtonText}>Delete AsyncStorage</Text>
-        </TouchableOpacity> */}
       </View>
     </SQLiteProvider>
   );
@@ -300,5 +302,16 @@ const styles = StyleSheet.create({
   centeredCell: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  signOutButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    backgroundColor: '#dc3545',
+    padding: 10,
+    borderRadius: 5,
+  },
+  signOutButtonText: {
+    color: 'white',
   },
 });
