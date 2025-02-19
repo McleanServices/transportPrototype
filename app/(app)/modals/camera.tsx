@@ -4,15 +4,19 @@ import {
   CameraView,
   useCameraPermissions,
 } from "expo-camera";
-import { useRef, useState } from "react";
-import { Button, Pressable, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
+import { useRef, useState, useEffect } from "react";
+import { Button, Pressable, StyleSheet, Text, View, Image, ScrollView, FlatList } from "react-native"; // Updated import
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite'; // Updated import
+import { useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function CameraApp() {
+  const { transport_fiche_id } = useLocalSearchParams();
+  console.log('Local Search Params ID:', transport_fiche_id);
   const [permission, requestPermission] = useCameraPermissions();
   const ref = useRef<CameraView>(null);
   const [uri, setUri] = useState<string | null>(null);
@@ -20,6 +24,37 @@ function CameraApp() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [recording, setRecording] = useState(false);
   const db = useSQLiteContext();
+  const [photos, setPhotos] = useState<any[]>([]);
+  const [asyncPhotos, setAsyncPhotos] = useState<any[]>([]);
+
+  useEffect(() => {
+    const createTable = async () => {
+      try {
+        await db.execAsync(`
+          PRAGMA foreign_keys = ON;
+          CREATE TABLE IF NOT EXISTS Photos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uri TEXT,
+            transport_fiche_id INTEGER,
+            FOREIGN KEY (transport_fiche_id) REFERENCES Transport_rotation_fiche(id) ON DELETE CASCADE
+          );
+        `);
+      } catch (error) {
+        console.error('Error creating Photos table', error);
+      }
+    };
+
+    createTable();
+  }, [db]);
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      const result = await getPhotosById(parseInt(transport_fiche_id as string));
+      setPhotos(result);
+      await AsyncStorage.setItem('photos', JSON.stringify(result));
+    };
+    fetchPhotos();
+  }, [transport_fiche_id]);
 
   if (!permission) {
     return null;
@@ -41,17 +76,14 @@ function CameraApp() {
     if (photo?.uri) {
       setUri(photo.uri);
       try {
-        await db.execAsync(`
-          CREATE TABLE IF NOT EXISTS Photos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            uri TEXT
-          );
-        `);
         await db.runAsync(
-          'INSERT INTO Photos (uri) VALUES (?)',
-          [photo.uri]
+          'INSERT INTO Photos (uri, transport_fiche_id) VALUES (?, ?)',
+          [photo.uri, parseInt(transport_fiche_id as string)]
         );
         console.log('Photo URI saved to database:', photo.uri);
+        // Refresh the photos state to get the latest photos
+        const updatedPhotos = await getPhotosById(parseInt(transport_fiche_id as string));
+        setPhotos(updatedPhotos);
       } catch (error) {
         console.error('Error saving photo URI to database', error);
         alert('An error occurred while saving the photo URI. Please try again.');
@@ -88,15 +120,41 @@ function CameraApp() {
     }
   };
 
+  const getPhotosById = async (id: number) => {
+    try {
+      const result = await db.getAllAsync('SELECT * FROM Photos WHERE transport_fiche_id = ?', [id]);
+      console.log(`Photos for transport_fiche_id ${id}:`, result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching photos by ID from database', error);
+      alert('An error occurred while fetching the photos by ID. Please try again.');
+      return [];
+    }
+  };
+
   const renderPicture = () => {
     return (
       <View>
-        <Image
-          source={{ uri }}
-          contentFit="contain"
-          style={{ width: 300, aspectRatio: 1 }}
+        <FlatList
+          data={photos}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <Image
+              source={{ uri: item.uri }}
+              style={{ width: 300, aspectRatio: 1 }}
+            />
+          )}
         />
         <Button onPress={() => setUri(null)} title="Take another picture" />
+        <Button onPress={async () => {
+          await AsyncStorage.removeItem('photos');
+          router.back();
+        }} title="Finish" />
+        <Button onPress={() => console.log('Stored photos:', asyncPhotos)} title="Display Console" />
+        <Button onPress={async () => {
+          const result = await getPhotosById(parseInt(transport_fiche_id as string));
+          console.log(`Photos for transport_fiche_id ${transport_fiche_id}:`, result);
+        }} title="Log Photos for Current ID" />
       </View>
     );
   };
