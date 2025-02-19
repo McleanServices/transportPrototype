@@ -6,7 +6,6 @@ import EditModal from './modals/editModal';
 import ViewModal from './modals/viewModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SQLiteProvider } from 'expo-sqlite';
-import axios from 'axios';
 import * as SQLite from 'expo-sqlite';
 import { useAuth } from '../../context/auth'; // Import useAuth
 
@@ -28,31 +27,38 @@ export default function Home() {
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const { signOut } = useAuth(); // Get signOut function from useAuth
 
+  const fetchData = async () => {
+    try {
+      const db = await SQLite.openDatabaseAsync('transport.db');
+      await db.withTransactionAsync(async () => {
+        const result = await db.getAllAsync(`
+          SELECT * FROM Transport_rotation_fiche
+        `);
+        
+        // Check if result exists and has the expected structure
+        if (result && Array.isArray(result)) {
+          setData(result as FormData[]);
+        } else {
+          console.warn('Unexpected result structure:', result);
+          setData([]);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching data from database', error);
+      setData([]);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const db = await SQLite.openDatabaseAsync('transport.db');
-        await db.withTransactionAsync(async () => {
-          const result = await db.getAllAsync(`
-            SELECT * FROM Transport_rotation_fiche
-          `);
-          
-          // Check if result exists and has the expected structure
-          if (result && Array.isArray(result)) {
-            setData(result as FormData[]);
-          } else {
-            console.warn('Unexpected result structure:', result);
-            setData([]);
-          }
-        });
-      } catch (error) {
-        console.error('Error fetching data from database', error);
-        setData([]);
-      }
-    };
-  
     fetchData();
   }, []);
+  
+  useEffect(() => {
+    // Refresh the table if any item has an empty id
+    if (data.some(item => !item.id)) {
+      fetchData();
+    }
+  }, [data]);
   
   const handleFormSubmit = (newFormData: FormData) => {
     setData((prevData) => {
@@ -160,11 +166,10 @@ export default function Home() {
         )}
         {selectedRow !== null && (
           <ViewModal
-            id={data[selectedRow].id}
+          transport_fiche_id={data[selectedRow].id}
             modalVisible={viewModalVisible}
             setModalVisible={setViewModalVisible}
             formData={data[selectedRow]}
-            imageUris={[]} // Pass an empty array
           />
         )}
       </View>
