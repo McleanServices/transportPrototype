@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
-import ModalForm from '../modals/modal';
-import EditModal from '../modals/editModal';
-import ViewModal from '../modals/viewModal';
+import ModalForm from './modals/modal';
+import EditModal from './modals/editModal';
+import ViewModal from './modals/viewModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SQLiteProvider } from 'expo-sqlite';
 import axios from 'axios';
@@ -11,6 +11,7 @@ import * as SQLite from 'expo-sqlite';
 import { useAuth } from '../../context/auth'; // Import useAuth
 
 interface FormData {
+  id: number; // Add id property
   exploitants: string;
   arrivalTime: string;
   departureTime: string | null; // Allow departureTime to be null
@@ -25,45 +26,34 @@ export default function Home() {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
-  const [imageUris, setImageUris] = useState<{ [key: number]: string[] }>({}); // Change to array of image URIs
   const { signOut } = useAuth(); // Get signOut function from useAuth
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const storedData = await AsyncStorage.getItem('formData');
-        if (storedData) {
-          setData(JSON.parse(storedData));
-        }
+        const db = await SQLite.openDatabaseAsync('transport.db');
+        await db.withTransactionAsync(async () => {
+          const result = await db.getAllAsync(`
+            SELECT * FROM Transport_rotation_fiche
+          `);
+          
+          // Check if result exists and has the expected structure
+          if (result && Array.isArray(result)) {
+            setData(result as FormData[]);
+          } else {
+            console.warn('Unexpected result structure:', result);
+            setData([]);
+          }
+        });
       } catch (error) {
-        console.error('Error fetching data', error);
+        console.error('Error fetching data from database', error);
+        setData([]);
       }
     };
-
+  
     fetchData();
   }, []);
-
-  useEffect(() => {
-    const fetchImageUris = async () => {
-      try {
-        const storedImageUris = await AsyncStorage.getItem('imageUris');
-        if (storedImageUris) {
-          const parsedImageUris = JSON.parse(storedImageUris);
-          if (Array.isArray(parsedImageUris)) {
-            console.log('Fetched imageUris:', parsedImageUris); // Debug log
-            setImageUris(parsedImageUris);
-          } else {
-            console.error('Fetched imageUris is not an array:', parsedImageUris);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching image URIs', error);
-      }
-    };
-
-    fetchImageUris();
-  }, []);
-
+  
   const handleFormSubmit = (newFormData: FormData) => {
     setData((prevData) => {
       const updatedData = [
@@ -99,61 +89,6 @@ export default function Home() {
     setViewModalVisible(true);
   };
 
-  const handleCapture = (uri: string, index: number) => {
-    setImageUris((prevUris) => {
-      const updatedUris = {
-        ...prevUris,
-        [index]: [...(prevUris[index] || []), uri], // Append new image URI
-      };
-      console.log('Updated imageUris:', updatedUris); // Debug log
-      AsyncStorage.setItem('imageUris', JSON.stringify(updatedUris));
-      return updatedUris;
-    });
-  };
-
-  const handlePublishToServer = async () => {
-    try {
-      const db = await SQLite.openDatabaseAsync('transport.db');
-  
-      await db.withTransactionAsync(async () => {
-        const result = await db.getFirstAsync('SELECT COUNT(*) FROM Transport_rotation_fiche');
-        
-        const countResult = (result as any).rows._array[0];
-        console.log('Count:', countResult['COUNT(*)']);
-  
-        const dataResult = await db.getAllAsync('SELECT * FROM Transport_rotation_fiche');
-  
-        let dataToPublish: any[] = [];
-  
-        if (dataResult && (dataResult as any).rows._array.length > 0) {
-          dataToPublish = (dataResult as any).rows._array;
-  
-          for (const row of dataToPublish) {
-            await axios.post('https://a417-194-3-170-45.ngrok-free.app/api/transport_rotation_fiche', row);
-          }
-          alert('Data published to server successfully');
-        } else {
-          console.error('No data found in Transport_rotation_fiche');
-          alert('No data found to publish.');
-        }
-      });
-    } catch (error) {
-      console.error('Error publishing data to server', error);
-      alert('An error occurred while publishing data to the server. Please try again.');
-    }
-  };
-
-  const handleDeleteAsyncStorage = async () => {
-    try {
-      await AsyncStorage.removeItem('formData');
-      setData([]);
-      alert('AsyncStorage data deleted successfully');
-    } catch (error) {
-      console.error('Error deleting AsyncStorage data', error);
-      alert('An error occurred while deleting AsyncStorage data. Please try again.');
-    }
-  };
-
   return (
     <SQLiteProvider databaseName="transport.db">
       <View style={{ flex: 1 }}>
@@ -168,7 +103,7 @@ export default function Home() {
             >
               <FontAwesome name="pencil" size={20} style={{ flex: 0.3, textAlign: "center" }} /> 
               <View style={{ width: 1, backgroundColor: "#000" }} />
-              <Text style={{ flex: 0.5, textAlign: "center" }}>N* D'ORDRE</Text>
+              <Text style={{ flex: 0.5, textAlign: "center" }}>N* D'ORDRE</Text> 
               <View style={{ width: 1, backgroundColor: "#000" }} />
               <Text style={{ flex: 1, textAlign: "center" }}>N EXPLOITANTS</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
@@ -188,7 +123,7 @@ export default function Home() {
               <TouchableOpacity style={[styles.cell, { flex: 0.3 }]} onPress={() => handleRowSelect(index)}>
                 <Text>{selectedRow === index ? '✓' : ''}</Text>
               </TouchableOpacity>
-              <Text style={[styles.cell, { flex: 0.5 }]}>{item.order}</Text>
+              <Text style={[styles.cell, { flex: 0.5 }]}>{item.id}</Text> 
               <Text style={styles.cell}>{item.exploitants}</Text>
               <Text style={styles.cell}>{new Date(item.arrivalTime).toLocaleTimeString()}</Text>
               <Text style={styles.cell}>{item.departureTime ? new Date(item.departureTime).toLocaleTimeString() : 'null'}</Text>
@@ -225,11 +160,11 @@ export default function Home() {
         )}
         {selectedRow !== null && (
           <ViewModal
+            id={data[selectedRow].id}
             modalVisible={viewModalVisible}
             setModalVisible={setViewModalVisible}
             formData={data[selectedRow]}
-            imageUris={imageUris[selectedRow] || []} // Pass array of image URIs
-            onCapture={(uri) => handleCapture(uri, selectedRow)}
+            imageUris={[]} // Pass an empty array
           />
         )}
       </View>

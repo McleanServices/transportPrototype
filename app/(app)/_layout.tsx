@@ -103,21 +103,12 @@ export default function Layout() {
         <Drawer.Screen
           name="modals/camera" 
           options={{
-            drawerLabel: 'modal',
+            drawerLabel: 'camera',
             title: 'overview',
-            drawerItemStyle: { display: 'none' }, 
           }}
         />
         <Drawer.Screen
           name="modals/viewModal" 
-          options={{
-            drawerLabel: 'modal',
-            title: 'overview',
-            drawerItemStyle: { display: 'none' }, 
-          }}
-        />
-        <Drawer.Screen
-          name="modals/viewImagesModal" 
           options={{
             drawerLabel: 'modal',
             title: 'overview',
