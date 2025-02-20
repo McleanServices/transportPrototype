@@ -98,6 +98,9 @@ export default function Home() {
   return (
     <SQLiteProvider databaseName="transport.db">
       <View style={{ flex: 1 }}>
+        <Text style={styles.headerTitle}>
+          <Text style={styles.blueText}>GARE ROUTIERE GUMBS ANTOINE JULIEN</Text> <Text style={styles.redText}>ROTATIONS JOURNALIERES EXPLOITANTS BUS TCP/TCI/ZH</Text>
+        </Text>
         <FlatList
           ListHeaderComponent={
             <View
@@ -253,5 +256,17 @@ const styles = StyleSheet.create({
   },
   signOutButtonText: {
     color: 'white',
+  },
+  headerTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  blueText: {
+    color: 'blue',
+  },
+  redText: {
+    color: 'red',
   },
 });
