@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
   },
   editButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 90,
+    bottom: 90, // Adjusted to be above the plus add button
+    right: 20,  // Align with the plus add button
     backgroundColor: '#FFA500',
     width: 56,
     height: 56,
