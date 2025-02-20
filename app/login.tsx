@@ -1,48 +1,50 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useAuth } from '../context/auth';
 import { router } from 'expo-router';
 import { useStorageState } from '../context/useStorageState';
 
 const Login = () => {
-    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { signIn } = useAuth();
-    const [storedName, setStoredName] = useStorageState('username');
+    const [storedEmail, setStoredEmail] = useStorageState('email');
     
     const handleSubmit = () => {
-        if ((name === 'ty' && password === '123') || (name === 'alex' && password === '456')) {
+        if (email && password) {
             signIn('dummyToken', { id: 1, role: 'user' });
-            setStoredName(name); // Save the name to storage
-            console.log('Login successful');
+            setStoredEmail(email);
             router.replace('./(app)');
         } else {
             console.log('Invalid credentials');
         }
-        console.log('Name:', name);
-        console.log('Password:', password);
     };
 
     return (
         <View style={styles.container}>
-            <View style={styles.form}>
-                <Text>Name:</Text>
+            <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+            <View style={styles.inputContainer}>
                 <TextInput
-                    value={name}
-                    onChangeText={(text) => setName(text)}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
                     style={styles.input}
+                    keyboardType="email-address"
                 />
             </View>
-            <View style={styles.form}>
-                <Text>Password:</Text>
+            <View style={styles.inputContainer}>
                 <TextInput
+                    placeholder="Password"
                     secureTextEntry
                     value={password}
-                    onChangeText={(text) => setPassword(text)}
+                    onChangeText={setPassword}
                     style={styles.input}
                 />
             </View>
-            <Button title="Login" onPress={handleSubmit} />
+            <TouchableOpacity style={styles.loginButton} onPress={handleSubmit}>
+                <Text style={styles.loginText}>LOGIN</Text>
+            </TouchableOpacity>
+            
         </View>
     );
 };
@@ -52,17 +54,50 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 16,
+        backgroundColor: '#f5fcff',
+        padding: 20,
     },
-    form: {
+    logo: {
+        width: 140,
+        height: 100,
+        marginBottom: 20,
+    },
+    inputContainer: {
         width: '100%',
-        marginBottom: 16,
+        backgroundColor: '#e3f2fd',
+        borderRadius: 25,
+        padding: 10,
+        marginBottom: 15,
     },
     input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 8,
-        borderRadius: 4,
+        height: 40,
+        color: '#000',
+        paddingHorizontal: 10,
+    },
+    loginButton: {
+        backgroundColor: '#64b5f6',
+        padding: 15,
+        borderRadius: 25,
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    loginText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    forgotPassword: {
+        color: '#64b5f6',
+        marginBottom: 20,
+    },
+    footerText: {
+        textAlign: 'center',
+        color: '#777',
+        marginTop: 20,
+    },
+    linkText: {
+        color: '#42a5f5',
+        fontWeight: 'bold',
     },
 });
 
