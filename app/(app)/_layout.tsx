@@ -1,10 +1,11 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import { Text, View, Pressable, Animated } from 'react-native'; 
+import { Text, View, Pressable, Animated, Image } from 'react-native'; 
 import { Redirect} from 'expo-router';
 import { useAuth } from '../../context/auth';
 import React from 'react';
 import { useStorageState } from '../../context/useStorageState';
+import { Ionicons } from '@expo/vector-icons';
 
 
 export default function Layout() {
@@ -68,11 +69,20 @@ export default function Layout() {
           name="index" 
           options={{
             drawerLabel: 'Home',
-            title: `Fiche De Rotation - Bus`,
+            headerTitle: () => (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                <Image source={require('../../assets/images/logo.png')} style={{ width: 70, height: 50, marginRight: 20 }} />
+                <Text>Fiche De Rotation - Bus</Text>
+              </View>
+            ),
+
             headerRight: () => (
-              <Text style={{ marginRight: 10 }}>
-                {storedName[1] ? storedName[1] : ''}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
+                <Ionicons name="person-circle" size={24} color="black" />
+                <Text style={{ marginLeft: 5 }}>
+                  {storedName[1] ? storedName[1] : ''}
+                </Text>
+              </View>
             ),
           }}
         />
@@ -105,6 +115,7 @@ export default function Layout() {
           options={{
             drawerLabel: 'camera',
             title: 'overview',
+            drawerItemStyle: { display: 'none' },
           }}
         />
         <Drawer.Screen
