@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { useSQLiteContext } from 'expo-sqlite';
+import databaseService from '../services/databaseService';
 
 interface EditModalProps {
   modalVisible: boolean;
@@ -11,7 +11,6 @@ interface EditModalProps {
 }
 
 const EditModal: React.FC<EditModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
-  const db = useSQLiteContext();
   const [editData, setEditData] = useState(formData);
 
   useEffect(() => {
@@ -29,34 +28,31 @@ const EditModal: React.FC<EditModalProps> = ({ modalVisible, setModalVisible, fo
 
   const handleSubmit = async () => {
     try {
-      const { id, exploitants, arrivalTime, departureTime, passengers, observations } = editData;
-      const arrivalTimeISO = new Date(arrivalTime).toISOString();
-      const departureTimeISO = new Date(departureTime).toISOString();
-      try {
-        await db.runAsync(
-          'UPDATE Transport_rotation_fiche SET exploitants = ?, arrivalTime = ?, departureTime = ?, passengers = ?, observations = ? WHERE id = ?',
-          [exploitants, arrivalTimeISO, departureTimeISO, passengers, observations, id]
-        );
-      } catch (error) {
-        console.error('Error updating data', error);
-        alert('An error occurred while updating data. Please try again.');
+      const { id } = editData;
+      if (!id) {
+        console.error('No ID provided for update');
         return;
       }
 
-      console.log('Data updated successfully');
-      onFormSubmit(editData);
+      const dataToUpdate = {
+        ...editData,
+        arrivalTime: new Date(editData.arrivalTime).toISOString(),
+        departureTime: editData.departureTime ? new Date(editData.departureTime).toISOString() : null
+      };
 
-      try {
-        const allData = await db.getAllAsync('SELECT * FROM Transport_rotation_fiche');
-        console.log('All Data in Transport_rotation_fiche:', allData);
-      } catch (error) {
-        console.error('Error fetching all data', error);
+      const success = await databaseService.updateTransportRecord(id, dataToUpdate);
+      
+      if (success) {
+        console.log('Data updated successfully');
+        onFormSubmit(dataToUpdate);
+        setModalVisible(false);
+      } else {
+        alert('Failed to update record');
       }
     } catch (error) {
       console.error('Error updating data', error);
       alert('An error occurred while updating data. Please try again.');
     }
-    setModalVisible(false);
   };
 
   const showArrivalTimePicker = () => {

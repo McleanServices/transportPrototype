@@ -6,13 +6,15 @@ import { useAuth } from '../../context/auth';
 import React from 'react';
 import { useStorageState } from '../../context/useStorageState';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useRouter } from 'expo-router';
+import HeaderTitle from '../../components/HeaderTitle';
 
 export default function Layout() {
 
   const { session, isLoading } = useAuth();
   const bounceAnimation = new Animated.Value(0);
-  const [storedName] = useStorageState('username');
+  const [storedEmail] = useStorageState('email');
+  const router = useRouter();
 
   React.useEffect(() => {
     Animated.loop(
@@ -31,24 +33,6 @@ export default function Layout() {
     ).start();
   }, []);
 
-  const bounceStyle = {
-    transform: [
-      {
-        translateY: bounceAnimation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -10],
-        }),
-      },
-    ],
-  };
-
-  const textStyle = {
-    fontWeight: 'bold',
-    fontSize: 15,
-    textShadowColor: 'black',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 1,
-  };
 
   if (isLoading) {
     return (
@@ -70,19 +54,20 @@ export default function Layout() {
           options={{
             drawerLabel: 'Home',
             headerTitle: () => (
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                <Image source={require('../../assets/images/logo.png')} style={{ width: 70, height: 50, marginRight: 20 }} />
-                <Text>Fiche De Rotation - Bus</Text>
-              </View>
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+              />
             ),
-
             headerRight: () => (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
-                <Ionicons name="person-circle" size={24} color="black" />
-                <Text style={{ marginLeft: 5 }}>
-                  {storedName[1] ? storedName[1] : ''}
-                </Text>
-              </View>
+              <Pressable onPress={() => router.push('/parametres')}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
+                  <Ionicons name="person-circle" size={24} color="black" />
+                  <Text style={{ marginLeft: 5 }}>
+                    {storedEmail ? storedEmail : ''}
+                  </Text>
+                </View>
+              </Pressable>
             ),
           }}
         />
@@ -130,9 +115,16 @@ export default function Layout() {
           name="fiche/control" 
           options={{
             drawerLabel: 'fiche',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+              />
+            ),
             title: 'overview',
           }}
         />
+        
       </Drawer>
     </GestureHandlerRootView>
   );

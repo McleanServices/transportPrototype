@@ -1,99 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
 import ModalForm from './modals/modal';
 import EditModal from './modals/editModal';
 import ViewModal from './modals/viewModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SQLiteProvider } from 'expo-sqlite';
-import * as SQLite from 'expo-sqlite';
-import { useAuth } from '../../context/auth'; // Import useAuth
-
-interface FormData {
-  id: number; // Add id property
-  exploitants: string;
-  arrivalTime: string;
-  departureTime: string | null; // Allow departureTime to be null
-  passengers: string | null; // Allow passengers to be null
-  observations: string | null; // Allow observations to be null
-  order?: number;
-}
+import { useTransportData } from '../hooks/useTransportData';
 
 export default function Home() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [data, setData] = useState<FormData[]>([]);
-  const [selectedRow, setSelectedRow] = useState<number | null>(null);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [viewModalVisible, setViewModalVisible] = useState(false);
-  const { signOut } = useAuth(); // Get signOut function from useAuth
-
-  const fetchData = async () => {
-    try {
-      const db = await SQLite.openDatabaseAsync('transport.db');
-      await db.withTransactionAsync(async () => {
-        const result = await db.getAllAsync(`
-          SELECT * FROM Transport_rotation_fiche
-        `);
-        
-        // Check if result exists and has the expected structure
-        if (result && Array.isArray(result)) {
-          setData(result as FormData[]);
-        } else {
-          console.warn('Unexpected result structure:', result);
-          setData([]);
-        }
-      });
-    } catch (error) {
-      console.error('Error fetching data from database', error);
-      setData([]);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-  
-  useEffect(() => {
-    // Refresh the table if any item has an empty id
-    if (data.some(item => !item.id)) {
-      fetchData();
-    }
-  }, [data]);
-  
-  const handleFormSubmit = (newFormData: FormData) => {
-    setData((prevData) => {
-      const updatedData = [
-        ...prevData,
-        { ...newFormData, order: prevData.length + 1 }
-      ];
-      AsyncStorage.setItem('formData', JSON.stringify(updatedData));
-      return updatedData;
-    });
-  };
-
-  const handleRowSelect = (index: number) => {
-    setSelectedRow((prevSelectedRow) => (prevSelectedRow === index ? null : index));
-  };
-
-  const handleEditPress = () => {
-    setEditModalVisible(true);
-  };
-
-  const handleEditFormSubmit = (updatedFormData: FormData) => {
-    setData((prevData) => {
-      const updatedData = prevData.map((item, index) =>
-        index === selectedRow ? updatedFormData : item
-      );
-      AsyncStorage.setItem('formData', JSON.stringify(updatedData));
-      return updatedData;
-    });
-    setEditModalVisible(false);
-  };
-
-  const handleViewPress = (index: number) => {
-    setSelectedRow(index);
-    setViewModalVisible(true);
-  };
+  const {
+    modalVisible,
+    setModalVisible,
+    data,
+    selectedRow,
+    editModalVisible,
+    setEditModalVisible,
+    viewModalVisible,
+    setViewModalVisible,
+    handleFormSubmit,
+    handleEditFormSubmit,
+    handleRowSelect,
+    handleEditPress,
+    handleViewPress,
+  } = useTransportData();
 
   return (
     <SQLiteProvider databaseName="transport.db">
@@ -155,9 +84,6 @@ export default function Home() {
         <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
           <AntDesign name="plus" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
         <ModalForm modalVisible={modalVisible} setModalVisible={setModalVisible} onFormSubmit={handleFormSubmit} />
         {selectedRow !== null && (
           <EditModal
@@ -167,9 +93,9 @@ export default function Home() {
             onFormSubmit={handleEditFormSubmit}
           />
         )}
-        {selectedRow !== null && (
+        {selectedRow !== null && data[selectedRow]?.id !== undefined && (
           <ViewModal
-          transport_fiche_id={data[selectedRow].id}
+            transport_fiche_id={data[selectedRow].id!}
             modalVisible={viewModalVisible}
             setModalVisible={setViewModalVisible}
             formData={data[selectedRow]}
@@ -245,17 +171,6 @@ const styles = StyleSheet.create({
   centeredCell: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  signOutButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    backgroundColor: '#dc3545',
-    padding: 10,
-    borderRadius: 5,
-  },
-  signOutButtonText: {
-    color: 'white',
   },
   headerTitle: {
     fontSize: 15,

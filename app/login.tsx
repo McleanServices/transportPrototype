@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useAuth } from '../context/auth';
 import { router } from 'expo-router';
@@ -10,8 +10,14 @@ const Login = () => {
     const { signIn } = useAuth();
     const [storedEmail, setStoredEmail] = useStorageState('email');
     
+    useEffect(() => {
+        // Set fake user email and password for testing
+        setEmail('test');
+        setPassword('123');
+    }, []);
+
     const handleSubmit = () => {
-        if (email && password) {
+        if ((email === 'test' && password === '123') || (email === 'user' && password === '456')) {
             signIn('dummyToken', { id: 1, role: 'user' });
             setStoredEmail(email);
             router.replace('./(app)');

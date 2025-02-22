@@ -1,21 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, Button, StyleSheet, TextInput, Image } from 'react-native';
 import { router } from 'expo-router';
+import databaseService from '../services/databaseService';
 
+// Rename FormData to TransportFormData to avoid conflict
 interface ViewModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
-  formData: any;
-  transport_fiche_id: number; 
+  formData: {
+    id?: number;
+    exploitants: string;
+    arrivalTime: string;
+    departureTime: string | null;
+    passengers: string | null;
+    observations: string | null;
+    order?: number;
+  };
+  transport_fiche_id: number;
 }
 
 const ViewModal: React.FC<ViewModalProps> = ({ modalVisible, setModalVisible, formData, transport_fiche_id }) => {
   const [editData, setEditData] = useState(formData);
 
+  const handleInputChange = async (name: string, value: any) => {
+    const updatedData = { ...editData, [name]: value };
+    setEditData(updatedData);
 
-  const handleInputChange = (name: string, value: any) => {
-    setEditData({ ...editData, [name]: value });
+    try {
+      // Update the database when observations change
+      if (name === 'observations') {
+        const success = await databaseService.updateTransportRecord(transport_fiche_id, updatedData);
+        if (!success) {
+          console.error('Failed to update observations');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating observations:', error);
+    }
   };
+
+  // Fetch latest data when modal opens
+  useEffect(() => {
+    const fetchRecord = async () => {
+      if (modalVisible && transport_fiche_id) {
+        try {
+          const record = await databaseService.getTransportRecordById(transport_fiche_id);
+          if (record) {
+            setEditData(record);
+          }
+        } catch (error) {
+          console.error('Error fetching record:', error);
+        }
+      }
+    };
+
+    fetchRecord();
+  }, [modalVisible, transport_fiche_id]);
 
   return (
     <Modal
@@ -27,13 +67,6 @@ const ViewModal: React.FC<ViewModalProps> = ({ modalVisible, setModalVisible, fo
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <Text style={styles.modalText}>N* D'ORDRE: {transport_fiche_id} N EXPLOITANTS: {editData.exploitants}</Text>
-          <View style={styles.row}>
-            <TextInput
-              style={styles.input}
-              value={editData.observations}
-              onChangeText={(value) => handleInputChange('observations', value)}
-            />
-          </View>
           <Button title="Add Photos" onPress={() => {
             setModalVisible(false);
             router.push(`./(app)/modals/camera?transport_fiche_id=${transport_fiche_id}`);

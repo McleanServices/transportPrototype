@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, Button, StyleSheet, TextInput } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { useSQLiteContext } from 'expo-sqlite';
+import databaseService from '../services/databaseService';
 
 interface ModalFormProps {
   modalVisible: boolean;
@@ -10,7 +10,6 @@ interface ModalFormProps {
 }
 
 const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, onFormSubmit }) => {
-  const db = useSQLiteContext();
   const [formData, setFormData] = useState({
     exploitants: '',
     arrivalTime: new Date(),
@@ -54,72 +53,19 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
       return;
     }
     try {
-      try {
-        await db.execAsync(`
-          CREATE TABLE IF NOT EXISTS Transport_rotation_fiche (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exploitants TEXT,
-            arrivalTime TEXT,
-            departureTime TEXT,
-            passengers TEXT,
-            observations TEXT
-          );
-        `);
-      } catch (error) {
-        console.error('Error creating table', error);
-        alert('An error occurred while creating the table. Please try again.');
-        return;
-      }
+      const dataToSubmit = {
+        ...formData,
+        arrivalTime: formData.arrivalTime.toISOString(),
+      };
 
-      const { exploitants, arrivalTime } = formData;
-      try {
-        console.log('Inserting data:', {
-          exploitants,
-          arrivalTime: arrivalTime.toISOString(),
-          departureTime: null, // Set departureTime to null
-          passengers: null, // Set passengers to null
-          observations: null // Set observations to null
-        });
-        await db.runAsync(
-          'INSERT INTO Transport_rotation_fiche (exploitants, arrivalTime, departureTime, passengers, observations) VALUES (?, ?, ?, ?, ?)',
-          [exploitants, arrivalTime.toISOString(), null, null, null]
-        );
-      } catch (error) {
-        console.error('Error inserting data', error);
-        alert('An error occurred while inserting data. Please try again.');
-        return;
-      }
-
+      await databaseService.createTransportRecord(dataToSubmit);
       console.log('Data saved successfully');
-      console.log('Saved Data:', formData); // Log the data
-      onFormSubmit(formData);
-
-      try {
-        const allData: any = await db.getAllAsync('SELECT * FROM Transport_rotation_fiche');
-        console.log('All Data in Transport_rotation_fiche:', allData);
-
-        if (Array.isArray(allData)) {
-          console.log('allData is an array with length:', allData.length);
-          if (allData.length > 0) {
-            console.log('First element of allData:', allData[0]);
-            // alert('Data fetched successfully');
-          } else {
-            console.error('allData array is empty');
-            alert('No data found.');
-          }
-        } else {
-          console.error('allData is not an array');
-          alert('No data found.');
-        }
-      } catch (error) {
-        console.error('Error fetching all data', error);
-        alert('An error occurred while fetching data. Please try again.');
-      }
+      onFormSubmit(dataToSubmit);
+      setModalVisible(false);
     } catch (error) {
       console.error('Error saving data', error);
       alert('An error occurred while saving data. Please try again.');
     }
-    setModalVisible(false);
   };
 
   const showArrivalTimePicker = () => {
