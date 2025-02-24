@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import databaseService from '../services/databaseService';
+import busRotationService from '../services/busRotationService';
 
-interface EditModalProps {
+interface EditBusRotationModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
   formData: any;
   onFormSubmit: (formData: any) => void;
 }
 
-const EditModal: React.FC<EditModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
+const EditBusRotationModal: React.FC<EditBusRotationModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
   const [editData, setEditData] = useState(formData);
 
   useEffect(() => {
-    setEditData(formData);
+    const preloadData = async () => {
+      if (formData.bus_rotation_id) {
+        const data = await busRotationService.getBusRotationById(formData.bus_rotation_id);
+        if (data) {
+          setEditData({
+            ...formData,
+            exploitants: data.numero_exploitants,
+            arrivalTime: new Date(data.arrival_time),
+            departureTime: data.departure_time ? new Date(data.departure_time) : new Date(),
+            passengers: data.passenger_count,
+            observations: data.observations
+          });
+        }
+      }
+    };
+
+    preloadData();
   }, [formData]);
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -28,19 +44,20 @@ const EditModal: React.FC<EditModalProps> = ({ modalVisible, setModalVisible, fo
 
   const handleSubmit = async () => {
     try {
-      const { id } = editData;
-      if (!id) {
+      const { bus_rotation_id } = editData;
+      if (!bus_rotation_id) {
         console.error('No ID provided for update');
         return;
       }
 
       const dataToUpdate = {
         ...editData,
-        arrivalTime: new Date(editData.arrivalTime).toISOString(),
-        departureTime: editData.departureTime ? new Date(editData.departureTime).toISOString() : null
+        arrival_time: new Date(editData.arrivalTime).toISOString(),
+        departure_time: editData.departureTime ? new Date(editData.departureTime).toISOString() : null,
+        passenger_count: editData.passengers // Ensure passengers field is included
       };
 
-      const success = await databaseService.updateTransportRecord(id, dataToUpdate);
+      const success = await busRotationService.updateBusRotation(bus_rotation_id, dataToUpdate);
       
       if (success) {
         console.log('Data updated successfully');
@@ -239,4 +256,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditModal;
+export default EditBusRotationModal;

@@ -1,26 +1,29 @@
 import { useState, useEffect } from 'react';
-import databaseService from '../services/databaseService';
+import busRotationService from '../services/busRotationService';
 
-export interface TransportFormData {
-  id?: number;
-  exploitants: string;
-  arrivalTime: string;
-  departureTime: string | null;
-  passengers: string | null;
+export interface BusRotationFormData {
+  bus_rotation_id?: number;
+  numero_exploitants: string;
+  order_number: number;
+  bus_type_id: number;
+  date: string;
+  arrival_time: string;
+  departure_time: string | null;
+  passenger_count: number;
   observations: string | null;
-  order?: number;
+  created_at?: string;
 }
 
-export function useTransportData() {
+export function useBusRotationData() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [data, setData] = useState<TransportFormData[]>([]);
+  const [data, setData] = useState<BusRotationFormData[]>([]);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
 
   const fetchData = async () => {
     try {
-      const records = await databaseService.getAllTransportRecords();
+      const records = await busRotationService.getAllBusRotations();
       setData(records);
     } catch (error) {
       console.error('Error fetching data from database', error);
@@ -32,9 +35,9 @@ export function useTransportData() {
     await fetchData();
   };
 
-  const handleFormSubmit = async (newFormData: TransportFormData) => {
+  const handleFormSubmit = async (newFormData: BusRotationFormData) => {
     try {
-      const newId = await databaseService.createTransportRecord(newFormData);
+      const newId = await busRotationService.createBusRotation(newFormData);
       if (newId) {
         await refreshData(); // Refresh data after successful insertion
         return true;
@@ -46,13 +49,13 @@ export function useTransportData() {
     }
   };
 
-  const handleEditFormSubmit = async (updatedFormData: TransportFormData) => {
+  const handleEditFormSubmit = async (updatedFormData: BusRotationFormData) => {
     if (selectedRow === null) return;
 
     try {
-      const id = data[selectedRow]?.id;
-      if (id !== undefined) {
-        const success = await databaseService.updateTransportRecord(id, updatedFormData);
+      const bus_rotation_id = data[selectedRow]?.bus_rotation_id;
+      if (bus_rotation_id !== undefined) {
+        const success = await busRotationService.updateBusRotation(bus_rotation_id, updatedFormData);
         if (success) {
           await fetchData();
           setEditModalVisible(false);
@@ -81,7 +84,7 @@ export function useTransportData() {
   useEffect(() => {
     const initAndFetch = async () => {
       try {
-        await databaseService.initDatabase();
+        await busRotationService.initDatabase();
         await fetchData();
       } catch (error) {
         console.error('Error initializing database:', error);
@@ -109,4 +112,4 @@ export function useTransportData() {
   };
 }
 
-export default useTransportData;
+export default useBusRotationData;

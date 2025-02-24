@@ -8,12 +8,11 @@ interface TransportFormData {
   departureTime: string | null;
   passengers: string | null;
   observations: string | null;
-  order?: number;
 }
 
 class DatabaseService {
   private dbName: string = 'transport.db';
-  private tableName: string = 'Transport_rotation_fiche';
+  private tableName: string = 'Transport_rotations_six';
 
   /**
    * Initialize the database and create tables if they don't exist
@@ -23,23 +22,17 @@ class DatabaseService {
     try {
       db = await SQLite.openDatabaseAsync(this.dbName);
       await db.withTransactionAsync(async () => {
-        // Drop the table if it needs to be updated
-        if (await this.tableNeedsUpdate(db!)) {
-          await db!.execAsync(`DROP TABLE IF EXISTS ${this.tableName}`);
-          
-          // Create the table with all required columns
-          await db!.execAsync(`
+        // Create the table without the order_num column
+        await db!.execAsync(`
             CREATE TABLE IF NOT EXISTS ${this.tableName} (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               exploitants TEXT NOT NULL,
               arrivalTime TEXT NOT NULL,
               departureTime TEXT,
               passengers TEXT,
-              observations TEXT,
-              order_num INTEGER
+              observations TEXT
             );
           `);
-        }
       });
       console.log('Database initialized successfully');
     } catch (error) {
@@ -49,15 +42,6 @@ class DatabaseService {
       if (db) {
         await db.closeAsync();
       }
-    }
-  }
-
-  private async tableNeedsUpdate(db: SQLite.SQLiteDatabase): Promise<boolean> {
-    try {
-      await db.getAllAsync(`SELECT order_num FROM ${this.tableName} LIMIT 1`);
-      return false;
-    } catch (error) {
-      return true;
     }
   }
 
@@ -77,17 +61,16 @@ class DatabaseService {
             arrivalTime, 
             departureTime, 
             passengers, 
-            observations, 
-            order_num as "order" 
+            observations
           FROM ${this.tableName}
           ORDER BY id DESC
         `);
-        
+
         if (result && Array.isArray(result)) {
           records = result as TransportFormData[];
         }
       });
-      
+
       await db.closeAsync();
       return records;
     } catch (error) {
@@ -112,17 +95,16 @@ class DatabaseService {
             arrivalTime, 
             departureTime, 
             passengers, 
-            observations, 
-            order_num as "order" 
+            observations
           FROM ${this.tableName}
           WHERE id = ?
         `, [id]);
-        
+
         if (result && Array.isArray(result) && result.length > 0) {
           record = result[0] as TransportFormData;
         }
       });
-      
+
       await db.closeAsync();
       return record;
     } catch (error) {
@@ -139,13 +121,6 @@ class DatabaseService {
       const db = await SQLite.openDatabaseAsync(this.dbName);
       let newId: number = 0;
 
-      // Get the current max order number
-      const maxOrderResult = await db.getAllAsync(`
-        SELECT MAX(order_num) as max_order FROM ${this.tableName}
-      `);
-      
-      const newOrder = (maxOrderResult[0] as { max_order: number })?.max_order ? (maxOrderResult[0] as { max_order: number }).max_order + 1 : 1;
-
       await db.withTransactionAsync(async () => {
         const result = await db.runAsync(`
           INSERT INTO ${this.tableName} (
@@ -153,21 +128,19 @@ class DatabaseService {
             arrivalTime, 
             departureTime, 
             passengers, 
-            observations, 
-            order_num
-          ) VALUES (?, ?, ?, ?, ?, ?)
+            observations
+          ) VALUES (?, ?, ?, ?, ?)
         `, [
           data.exploitants,
           data.arrivalTime,
           data.departureTime ?? null,
           data.passengers ?? null,
-          data.observations ?? null,
-          newOrder
+          data.observations ?? null
         ]);
-        
+
         newId = result.lastInsertRowId;
       });
-      
+
       await db.closeAsync();
       return newId;
     } catch (error) {
@@ -201,10 +174,11 @@ class DatabaseService {
           data.observations ?? null,
           id
         ]);
-        
+
         success = true;
+        console.log('Updated record:', { id, ...data });
       });
-      
+
       await db.closeAsync();
       return success;
     } catch (error) {
@@ -225,10 +199,10 @@ class DatabaseService {
         await db.runAsync(`
           DELETE FROM ${this.tableName} WHERE id = ?
         `, [id]);
-        
+
         success = true;
       });
-      
+
       await db.closeAsync();
       return success;
     } catch (error) {
@@ -250,14 +224,14 @@ class DatabaseService {
       await db.withTransactionAsync(async () => {
         // Create placeholders for the IN clause
         const placeholders = ids.map(() => '?').join(',');
-        
+
         await db.runAsync(`
           DELETE FROM ${this.tableName} WHERE id IN (${placeholders})
         `, ids);
-        
+
         success = true;
       });
-      
+
       await db.closeAsync();
       return success;
     } catch (error) {
@@ -278,10 +252,10 @@ class DatabaseService {
         const result = await db.getAllAsync(`
           SELECT COUNT(*) as count FROM ${this.tableName}
         `);
-        
+
         count = (result[0] as { count: number }).count || 0;
       });
-      
+
       await db.closeAsync();
       return count;
     } catch (error) {
@@ -301,19 +275,19 @@ class DatabaseService {
       await db.withTransactionAsync(async () => {
         // Get all records ordered by their current order
         const records = await db.getAllAsync(`
-          SELECT id FROM ${this.tableName} ORDER BY order_num ASC
+          SELECT id FROM ${this.tableName} ORDER BY id ASC
         `) as { id: number }[];
-        
+
         // Update each record with a new sequential order number
         for (let i = 0; i < records.length; i++) {
           await db.runAsync(`
-            UPDATE ${this.tableName} SET order_num = ? WHERE id = ?
+            UPDATE ${this.tableName} SET id = ? WHERE id = ?
           `, [i + 1, records[i].id]);
         }
-        
+
         success = true;
       });
-      
+
       await db.closeAsync();
       return success;
     } catch (error) {

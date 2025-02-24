@@ -1,13 +1,13 @@
 import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
-import ModalForm from '../modals/modal';
-import EditModal from '../modals/editModal';
-import ViewModal from '../modals/viewModal';
-import { SQLiteProvider } from 'expo-sqlite';
-import { useTransportData } from '../hooks/useTransportData';
+import { SQLiteProvider } from 'expo-sqlite'; // Ensure this import is correct
+import { useAirportTaxiRotationData } from '../hooks/useAirportTaxiRotationData';
+import AirportTaxiRotationModal from '../modals/airportTaxiRotationModal';
+import EditAirportTaxiRotationModal from '../modals/editAirportTaxiRotationModal';
+import AirportTaxiViewModal from '../modals/airportTaxiViewModal';
 
-export default function Home() {
+export default function AirportTaxiRotationFiche() {
   const {
     modalVisible,
     setModalVisible,
@@ -17,18 +17,18 @@ export default function Home() {
     setEditModalVisible,
     viewModalVisible,
     setViewModalVisible,
-    handleFormSubmit,  // This handler will now directly save to database
+    handleFormSubmit,
     handleEditFormSubmit,
     handleRowSelect,
     handleEditPress,
     handleViewPress,
-    refreshData,  // Make sure this is available from the hook
-  } = useTransportData();
+    refreshData, // Make sure this is available from the hook
+  } = useAirportTaxiRotationData();
 
   const handleModalSubmit = async (formData: any) => {
     try {
       await handleFormSubmit(formData);
-      await refreshData();  // Refresh the data after submission
+      await refreshData(); // Refresh the data after submission
     } catch (error) {
       console.error('Error handling form submission:', error);
       alert('An error occurred while saving the data.');
@@ -39,7 +39,7 @@ export default function Home() {
     <SQLiteProvider databaseName="transport.db">
       <View style={{ flex: 1 }}>
         <Text style={styles.headerTitle}>
-          <Text style={styles.blueText}>GARE ROUTIERE GUMBS ANTOINE JULIEN</Text> <Text style={styles.redText}>ROTATIONS JOURNALIERES EXPLOITANTS BUS TCP/TCI/ZH</Text>
+          <Text style={styles.blueText}>AIRPORT TAXI ROTATIONS</Text> <Text style={styles.redText}>DAILY ROTATIONS</Text>
         </Text>
         <FlatList
           ListHeaderComponent={
@@ -52,17 +52,17 @@ export default function Home() {
             >
               <FontAwesome name="pencil" size={20} style={{ flex: 0.3, textAlign: "center" }} /> 
               <View style={{ width: 1, backgroundColor: "#000" }} />
-              <Text style={{ flex: 0.5, textAlign: "center" }}>N* D'ORDRE</Text> 
+              <Text style={{ flex: 0.5, textAlign: "center" }}>ORDER NUMBER</Text> 
               <View style={{ width: 1, backgroundColor: "#000" }} />
-              <Text style={{ flex: 1, textAlign: "center" }}>N EXPLOITANTS</Text>
+              <Text style={{ flex: 1, textAlign: "center" }}>EXPLOITANTS</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
-              <Text style={{ flex: 1, textAlign: "center" }}>HEURE D'ARRIVEE</Text>
+              <Text style={{ flex: 1, textAlign: "center" }}>AIRLINE COMPANY</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
-              <Text style={{ flex: 1, textAlign: "center" }}>HEURE DE DEPART</Text>
+              <Text style={{ flex: 1, textAlign: "center" }}>DESTINATION</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
-              <Text style={{ flex: 1, textAlign: "center" }}>N PASSAGERS</Text>
+              <Text style={{ flex: 1, textAlign: "center" }}>PASSENGER COUNT</Text>
               <View style={{ width: 1, backgroundColor: "#000" }} />
-              <Text style={{ flex: 1, textAlign: "center" }}>OBSERVATIONS/REMARQUES</Text>
+              <Text style={{ flex: 1, textAlign: "center" }}>OBSERVATIONS</Text>
             </View>
           }
           data={data}
@@ -72,11 +72,11 @@ export default function Home() {
               <TouchableOpacity style={[styles.cell, { flex: 0.3 }]} onPress={() => handleRowSelect(index)}>
                 <Text>{selectedRow === index ? '✓' : ''}</Text>
               </TouchableOpacity>
-              <Text style={[styles.cell, { flex: 0.5 }]}>{item.id}</Text> 
-              <Text style={styles.cell}>{item.exploitants}</Text>
-              <Text style={styles.cell}>{new Date(item.arrivalTime).toLocaleTimeString()}</Text>
-              <Text style={styles.cell}>{item.departureTime ? new Date(item.departureTime).toLocaleTimeString() : 'null'}</Text>
-              <Text style={styles.cell}>{item.passengers}</Text>
+              <Text style={[styles.cell, { flex: 0.5 }]}>{index + 1}</Text> 
+              <Text style={styles.cell}>{item.numero_exploitants}</Text>
+              <Text style={styles.cell}>{item.airline_name}</Text>
+              <Text style={styles.cell}>{item.destination}</Text>
+              <Text style={styles.cell}>{item.passenger_count}</Text>
               <TouchableOpacity style={[styles.cell, styles.centeredCell]} onPress={() => handleViewPress(index)}>
                 <Text>View</Text>
               </TouchableOpacity>
@@ -92,25 +92,26 @@ export default function Home() {
             <AntDesign name="edit" size={24} color="white" />
           </TouchableOpacity>
         )}
+        
         <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
           <AntDesign name="plus" size={24} color="white" />
         </TouchableOpacity>
-        <ModalForm 
+        <AirportTaxiRotationModal 
           modalVisible={modalVisible} 
           setModalVisible={setModalVisible} 
-          onFormSubmit={handleModalSubmit}  // Use the new handler
+          onFormSubmit={handleModalSubmit} // Use the new handler
         />
         {selectedRow !== null && (
-          <EditModal
+          <EditAirportTaxiRotationModal
             modalVisible={editModalVisible}
             setModalVisible={setEditModalVisible}
             formData={data[selectedRow]}
             onFormSubmit={handleEditFormSubmit}
           />
         )}
-        {selectedRow !== null && data[selectedRow]?.id !== undefined && (
-          <ViewModal
-            transport_fiche_id={data[selectedRow].id!}
+        {selectedRow !== null && data[selectedRow]?.airport_taxi_id !== undefined && (
+          <AirportTaxiViewModal
+            airport_taxi_id={data[selectedRow].airport_taxi_id!}
             modalVisible={viewModalVisible}
             setModalVisible={setViewModalVisible}
             formData={data[selectedRow]}

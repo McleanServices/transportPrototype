@@ -58,13 +58,18 @@ const ModalForm: React.FC<ModalFormProps> = ({ modalVisible, setModalVisible, on
         arrivalTime: formData.arrivalTime.toISOString(),
       };
 
-      await databaseService.createTransportRecord(dataToSubmit);
-      console.log('Data saved successfully');
       onFormSubmit(dataToSubmit);
       setModalVisible(false);
+      setFormData({
+        exploitants: '',
+        arrivalTime: new Date(),
+        departureTime: null,
+        passengers: null,
+        observations: null,
+      });
     } catch (error) {
-      console.error('Error saving data', error);
-      alert('An error occurred while saving data. Please try again.');
+      console.error('Error processing form submission', error);
+      alert('An error occurred. Please try again.');
     }
   };
 

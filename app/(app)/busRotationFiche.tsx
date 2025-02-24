@@ -1,13 +1,12 @@
 import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
-import ModalForm from '../modals/modal';
-import EditModal from '../modals/editModal';
-import ViewModal from '../modals/viewModal';
-import { SQLiteProvider } from 'expo-sqlite';
-import { useTransportData } from '../hooks/useTransportData';
+import { SQLiteProvider } from 'expo-sqlite'; // Ensure this import is correct
+import { useBusRotationData } from '../hooks/useBusRotationData';
+import BusRotationModal from '../modals/busRotationModal';
+import EditBusRotationModal from '../modals/editBusRotationModal';
 
-export default function Home() {
+export default function BusRotationFiche(){
   const {
     modalVisible,
     setModalVisible,
@@ -17,13 +16,13 @@ export default function Home() {
     setEditModalVisible,
     viewModalVisible,
     setViewModalVisible,
-    handleFormSubmit,  // This handler will now directly save to database
+    handleFormSubmit,
     handleEditFormSubmit,
     handleRowSelect,
     handleEditPress,
     handleViewPress,
     refreshData,  // Make sure this is available from the hook
-  } = useTransportData();
+  } = useBusRotationData();
 
   const handleModalSubmit = async (formData: any) => {
     try {
@@ -72,11 +71,11 @@ export default function Home() {
               <TouchableOpacity style={[styles.cell, { flex: 0.3 }]} onPress={() => handleRowSelect(index)}>
                 <Text>{selectedRow === index ? '✓' : ''}</Text>
               </TouchableOpacity>
-              <Text style={[styles.cell, { flex: 0.5 }]}>{item.id}</Text> 
-              <Text style={styles.cell}>{item.exploitants}</Text>
-              <Text style={styles.cell}>{new Date(item.arrivalTime).toLocaleTimeString()}</Text>
-              <Text style={styles.cell}>{item.departureTime ? new Date(item.departureTime).toLocaleTimeString() : 'null'}</Text>
-              <Text style={styles.cell}>{item.passengers}</Text>
+              <Text style={[styles.cell, { flex: 0.5 }]}>{index + 1}</Text> 
+              <Text style={styles.cell}>{item.numero_exploitants}</Text>
+              <Text style={styles.cell}>{new Date(item.arrival_time).toLocaleTimeString()}</Text>
+              <Text style={styles.cell}>{item.departure_time ? new Date(item.departure_time).toLocaleTimeString() : 'null'}</Text>
+              <Text style={styles.cell}>{item.passenger_count}</Text>
               <TouchableOpacity style={[styles.cell, styles.centeredCell]} onPress={() => handleViewPress(index)}>
                 <Text>View</Text>
               </TouchableOpacity>
@@ -92,28 +91,21 @@ export default function Home() {
             <AntDesign name="edit" size={24} color="white" />
           </TouchableOpacity>
         )}
+        
         <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
           <AntDesign name="plus" size={24} color="white" />
         </TouchableOpacity>
-        <ModalForm 
+        <BusRotationModal 
           modalVisible={modalVisible} 
           setModalVisible={setModalVisible} 
           onFormSubmit={handleModalSubmit}  // Use the new handler
         />
         {selectedRow !== null && (
-          <EditModal
+          <EditBusRotationModal
             modalVisible={editModalVisible}
             setModalVisible={setEditModalVisible}
             formData={data[selectedRow]}
             onFormSubmit={handleEditFormSubmit}
-          />
-        )}
-        {selectedRow !== null && data[selectedRow]?.id !== undefined && (
-          <ViewModal
-            transport_fiche_id={data[selectedRow].id!}
-            modalVisible={viewModalVisible}
-            setModalVisible={setViewModalVisible}
-            formData={data[selectedRow]}
           />
         )}
       </View>

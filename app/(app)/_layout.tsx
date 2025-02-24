@@ -80,38 +80,6 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="modals/modal" 
-          options={{
-            drawerLabel: 'modal',
-            title: 'overview',
-            drawerItemStyle: { display: 'none' }, 
-          }}
-        />
-        <Drawer.Screen
-          name="modals/editModal" 
-          options={{
-            drawerLabel: 'modal',
-            title: 'overview',
-            drawerItemStyle: { display: 'none' }, 
-          }}
-        />
-        <Drawer.Screen
-          name="modals/camera" 
-          options={{
-            drawerLabel: 'camera',
-            title: 'overview',
-            drawerItemStyle: { display: 'none' },
-          }}
-        />
-        <Drawer.Screen
-          name="modals/viewModal" 
-          options={{
-            drawerLabel: 'modal',
-            title: 'overview',
-            drawerItemStyle: { display: 'none' }, 
-          }}
-        />
-        <Drawer.Screen
           name="fiche/control" 
           options={{
             drawerLabel: 'fiche',

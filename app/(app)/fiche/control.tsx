@@ -17,8 +17,12 @@ import * as Print from "expo-print";
 import { shareAsync } from "expo-sharing";
 import FaultsModal from "../../../components/FaultsModal";
 import StationModal from "../../../components/StationModal";
+import { Asset } from 'expo-asset';
+import { manipulateAsync } from 'expo-image-manipulator';
 
 const Control = () => {
+  const asset = Asset.fromModule(require('../../../assets/images/logo.png'));
+  
   const scrollViewRef = useRef<ScrollView | null>(null);
   const [dateTime, setDateTime] = useState(new Date());
   const [station, setStation] = useState("");
@@ -69,103 +73,170 @@ const Control = () => {
   };
 
   const printToFile = async () => {
+    const image = await manipulateAsync(asset.localUri ?? asset.uri, [], { base64: true });
     const html = `
       <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fiche d’Information</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      padding: 20px;
-      border: 1px solid #000;
-    }
-    h1, h2 {
-      text-align: center;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-    }
-    th, td {
-      border: 1px solid #000;
-      padding: 8px;
-      text-align: left;
-    }
-    .section {
-      margin-bottom: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche de Signalment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            border-bottom: 1px solid #ccc;
+            font-size: 0.9em;
+        }
+        .left-section {
+            float: left;
+            width: 50%;
+        }
+        .left-section img {
+            width: 100px;
+            height: auto;
+        }
+        .left-section p {
+            font-size: 0.8em;
+            margin: 5px 0;
+        }
+        .right-section {
+            float: right;
+            width: 50%;
+            text-align: right;
+        }
+        .upper-right {
+            position: relative;
+            top: 0;
+            right: 0;
+        }
+        .aligned-text {
+            background-color: blue;
+            color: white;
+            display: inline-block;
+            padding: 2px 5px;
+        }
+        .bordered-div {
+            border: 1px solid black;
+            display: inline-block;
+            position: relative;
+            top: 60px;
+        }
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .info-section {
+            margin: 10px 0;
+        }
+        .info-section p {
+            margin: 3px 0;
+        }
+    </style>
 </head>
 <body>
-  <h1>Fiche d’Information – Unité Contrôle et Vérification (UCV)</h1>
-  <p><strong>Date:</strong> ${dateTime.toLocaleString()}</p>
-  <p><strong>Station:</strong> ${station}</p>
+    <div class="header clearfix">
+        <div class="left-section">
+            <img src="data:image/jpeg;base64,${image.base64}" alt="Logo">
+            <p>DIRECTION TRANSPORT ET REGLEMENTATIONS</p>
+            <p>SERVICE DES ACTIVITES REGLEMENTAIRES</p>
+            <p>162A NRUE DE HOLLANDE</p>
+            <p>97150 MARIGOT SAINT MARTIN</p>
+            <p>TEL: 09901237645/069012769</p>
+        </div>
+        <div class="right-section">
+            <div class="upper-right">
+                COLLECTIVITE DE SAINT-MARTIN
+                <h2 style="font-size: 0.8em;">UNITE CONTROLE ET VERIFICATION UCV</h2>
+                <div class="bordered-div">
+                    <p class="aligned-text">FICHE DE SIGNALMENT</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info-section">
+        <p>Station: ${station}</p>
+        <p>Date: ${dateTime.toLocaleString()}</p>
+        <p>Nom: ${nom} Prenom: ${prenom} Poste occupe: ${occupation}</p>
+    </div>
 
-  <div class="section">
     <table>
-      <tr><td><strong>Nom:</strong></td><td>${nom}</td></tr>
-      <tr><td><strong>Prénom:</strong></td><td>${prenom}</td></tr>
+        <tbody>
+            <tr>
+                <td style="width: 50%;">Mise en cause</td>
+                <td style="width: 50%;">Faute commise</td>
+            </tr>
+            <tr>
+                <td style="width: 50%; vertical-align: top;" rowspan="2">
+                    Nom: ${chauffeurNom}<br>
+                    Prenom: ${chauffeurPrenom}<br>
+                    Ne(e) le: ${dateNaissance}<br>
+                    Lieu de naissance: ${lieuNaissance}<br>
+                    Domicile: ${domicile}<br>
+                    Occupation: ${occupation}<br>
+                    <div>Observations: ${observation}</div>
+                </td>
+                <td style="width: 50%;">${selectedFaults.join('<br>')}</td>
+            </tr>
+            <tr>
+                <td style="width: 50%;">Personne informée de l'incident:</td>
+            </tr>
+        </tbody>
     </table>
-  </div>
 
-  <div class="section">
-    <h2>Assistants</h2>
     <table>
-      <tr><th>Nom</th><th>Prénom</th></tr>
-      ${assistants
-        .map(
-          (assistant) =>
-            `<tr><td>${assistant.nom}</td><td>${assistant.prenom}</td></tr>`
-        )
-        .join("")}
+        <tbody>
+            <tr>
+                <td style="width: 50%; text-align: center;">
+                    <div>Visa de(s)</div>
+                    <p><br></p>
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    <div>Visa du N + 1</div>
+                    <p><br></p>
+                </td>
+            </tr>
+        </tbody>
     </table>
-  </div>
 
-  <div class="section">
-    <h2>Mise en Cause</h2>
     <table>
-      <tr><td><strong>Nom:</strong></td><td>${chauffeurNom}</td></tr>
-      <tr><td><strong>Prénom:</strong></td><td>${chauffeurPrenom}</td></tr>
-      <tr><td><strong>Né(e) le:</strong></td><td>${dateNaissance}</td></tr>
-      <tr><td><strong>Lieu de Naissance:</strong></td><td>${lieuNaissance}</td></tr>
-      <tr><td><strong>Domicile:</strong></td><td>${domicile}</td></tr>
-      <tr><td><strong>Occupation:</strong></td><td>${occupation}</td></tr>
-      <tr><td><strong>Document relevé:</strong></td><td>${documentReleve}</td></tr>
-      <tr><td><strong>Carte professionnelle N°:</strong></td><td>${carteProNum}</td></tr>
-      <tr><td><strong>Autorisation de circulation N°:</strong></td><td>${autorisationNum}</td></tr>
-      <tr><td><strong>Validité de l’autorisation:</strong></td><td>${validiteAutorisation}</td></tr>
+        <tbody>
+            <tr>
+                <td style="width: 50%; text-align: center;">
+                    <div>Visa Chef de Service</div>
+                    <div>Activite Regelementes</div>
+                    <p><br></p>
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    <div>Visa de la Directrice</div>
+                    <div>Transport et Regelementations</div>
+                    <p><br></p>
+                </td>
+            </tr>
+        </tbody>
     </table>
-  </div>
-
-  <div class="section">
-    <h2>Faute(s) commise(s)</h2>
-    <ul>
-      ${selectedFaults.map((fault) => `<li>${fault}</li>`).join("")}
-    </ul>
-  </div>
-
-  <div class="section">
-    <h2>Observations</h2>
-    <p>${observation}</p>
-  </div>
-
-  <div class="section">
-    <h2>Informations du Véhicule</h2>
-    <table>
-      <tr><td><strong>Taxi numéro:</strong></td><td>${taxiNumero}</td></tr>
-      <tr><td><strong>Immatriculation:</strong></td><td>${immatriculation}</td></tr>
-      <tr><td><strong>Type et Marque:</strong></td><td>${typeMarque}</td></tr>
-      <tr><td><strong>Couleur du véhicule:</strong></td><td>${couleurVehicule}</td></tr>
-    </table>
-  </div>
 </body>
 </html>
-
     `;
     const { uri } = await Print.printToFileAsync({ html });
     console.log("File has been saved to:", uri);
@@ -191,24 +262,30 @@ const Control = () => {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center", // Add this
                 padding: 10,
+                width: "100%", // Add this
               }}
             >
               <Image
                 source={require("../../../assets/images/logo.png")}
-                style={{ width: 100, height: 70, marginRight: 130 }}
+                style={{ width: 100, height: 70, marginRight: 20 }} // Reduced marginRight
               />
-              <View style={{ alignItems: "center" }}>
+              <View style={{ 
+                alignItems: "center",
+                flex: 1, // Add this
+                maxWidth: "70%" // Add this to prevent text from stretching too wide
+              }}>
                 <Text
-                  style={{ fontSize: 24, fontWeight: "bold", color: "green" }}
+                  style={{ fontSize: 24, fontWeight: "bold", color: "green", textAlign: "center" }}
                 >
-                  Fiche d’Information – Unité Contrôle et Vérification (UCV)
+                  Fiche d'Information – Unité Contrôle et Vérification (UCV)
                 </Text>
-                <Text style={{ fontSize: 18 }}>
+                <Text style={{ fontSize: 18, textAlign: "center" }}>
                   DIRECTION TRANSPORT ET REGLEMENTATIONS – Service des Activités
                   Règlementées
                 </Text>
-                <Text style={{ fontSize: 16 }}>
+                <Text style={{ fontSize: 16, textAlign: "center" }}>
                   {dateTime.toLocaleString()}
                 </Text>
               </View>
