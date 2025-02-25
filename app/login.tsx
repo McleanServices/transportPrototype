@@ -3,23 +3,44 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'reac
 import { useAuth } from '../context/auth';
 import { router } from 'expo-router';
 import { useStorageState } from '../context/useStorageState';
+import { DatabaseService } from './services/authService';
+import type { TransportFormData } from './services/authService';
 
 const Login = () => {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const { signIn } = useAuth();
-    const [storedEmail, setStoredEmail] = useStorageState('email');
-    
+    const [storedPrenom, setStoredPrenom] = useStorageState('prenom');
+    const [storedNom, setStoredNom] = useStorageState('nom');
+    const [storedRole, setStoredRole] = useStorageState('role');
+    const [users, setUsers] = useState<TransportFormData[]>([]);
+
     useEffect(() => {
-        // Set fake user email and password for testing
-        setEmail('test');
-        setPassword('123');
+        const loadUsers = async () => {
+            try {
+                const dbService = new DatabaseService();
+                await dbService.initDatabase(); // Initialize the database first
+                const allUsers = await dbService.getallUsers();
+                setUsers(allUsers);
+                console.log('Loaded users:', allUsers);
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        };
+
+        loadUsers();
     }, []);
 
     const handleSubmit = () => {
-        if ((email === 'test' && password === '123') || (email === 'user' && password === '456')) {
-            signIn('dummyToken', { id: 1, role: 'user' });
-            setStoredEmail(email);
+        const validUser = users.find(
+            user => user.username === username && user.password === password
+        );
+
+        if (validUser && validUser.user_id) {
+            signIn('dummyToken', { id: validUser.user_id, role: validUser.role });
+            setStoredPrenom(validUser.prenom);
+            setStoredNom(validUser.nom);
+            setStoredRole(validUser.role);
             router.replace('./(app)');
         } else {
             console.log('Invalid credentials');
@@ -31,11 +52,10 @@ const Login = () => {
             <Image source={require('../assets/images/logo.png')} style={styles.logo} />
             <View style={styles.inputContainer}>
                 <TextInput
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
+                    placeholder="Username"
+                    value={username}
+                    onChangeText={setUsername}
                     style={styles.input}
-                    keyboardType="email-address"
                 />
             </View>
             <View style={styles.inputContainer}>
