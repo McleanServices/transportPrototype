@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   KeyboardAvoidingView,
@@ -19,10 +19,16 @@ import FaultsModal from "../../../components/FaultsModal";
 import StationModal from "../../../components/StationModal";
 import { Asset } from 'expo-asset';
 import { manipulateAsync } from 'expo-image-manipulator';
+import { useStorageState } from '../../../context/useStorageState';
+import { useLocalSearchParams } from 'expo-router';
+
 
 const Control = () => {
   const asset = Asset.fromModule(require('../../../assets/images/logo.png'));
-  
+
+  const { control_id } = useLocalSearchParams();
+  console.log('Local Search Params ID Control ID is:', control_id);
+
   const scrollViewRef = useRef<ScrollView | null>(null);
   const [dateTime, setDateTime] = useState(new Date());
   const [station, setStation] = useState("");
@@ -49,6 +55,20 @@ const Control = () => {
   const [couleurVehicule, setCouleurVehicule] = useState("");
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
+
+  const [storedNom] = useStorageState('nom');
+  const [storedPrenom] = useStorageState('prenom');
+  const [storedRole] = useStorageState('role');
+
+  useEffect(() => {
+    const [loading, nom] = storedNom || [false, null];
+    const [loadingPrenom, prenom] = storedPrenom || [false, null];
+    const [loadingRole, role] = storedRole || [false, null];
+    console.log('Stored Nom:', !loading ? nom : 'loading...');
+    console.log('Stored Prenom:', !loadingPrenom ? prenom : 'loading...');
+    console.log('Stored Role:', !loadingRole ? role : 'loading...');
+
+  }, [storedNom, storedPrenom, storedRole]);
 
   const stations = ["Marigot", "Grand Case"];
   const occupations = ["Taxi Driver", "Transport Operator"];
@@ -177,7 +197,9 @@ const Control = () => {
     <div class="info-section">
         <p>Station: ${station}</p>
         <p>Date: ${dateTime.toLocaleString()}</p>
-        <p>Nom: ${nom} Prenom: ${prenom} Poste occupe: ${occupation}</p>
+        <p>Nom: ${storedNom?.[1] || ''} 
+           Prenom: ${storedPrenom?.[1] || ''} 
+           Poste occupe: ${storedRole?.[1] || ''}</p>
     </div>
 
     <table>
@@ -271,7 +293,7 @@ const Control = () => {
                 source={require("../../../assets/images/logo.png")}
                 style={{ width: 100, height: 70, marginRight: 20 }} // Reduced marginRight
               />
-              <View style={{ 
+              <View style={{
                 alignItems: "center",
                 flex: 1, // Add this
                 maxWidth: "70%" // Add this to prevent text from stretching too wide
@@ -307,19 +329,17 @@ const Control = () => {
             </View>
             <View style={{ padding: 10 }}>
               <Text>Nom:</Text>
-               <TextInput
-                style={styles.input}
-                placeholder="Nom"
-                value={nom}
-                onChangeText={setNom}
-              />
+              <View style={styles.input}>
+                <Text>{storedNom?.[1] || ''}</Text>
+              </View>
               <Text>Prénom:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Prénom"
-                value={prenom}
-                onChangeText={setPrenom}
-              />
+              <View style={styles.input}>
+                <Text>{storedPrenom?.[1] || ''}</Text>
+              </View>
+              <Text>Role:</Text>
+              <View style={styles.input}>
+                <Text>{storedRole?.[1] || ''}</Text>
+              </View>
             </View>
             <View style={{ padding: 10 }}>
               <Text style={styles.heading}>Assistants (if any)</Text>
