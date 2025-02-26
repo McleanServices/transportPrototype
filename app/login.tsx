@@ -3,8 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'reac
 import { useAuth } from '../context/auth';
 import { router } from 'expo-router';
 import { useStorageState } from '../context/useStorageState';
-import { DatabaseService } from './services/authService';
-import type { TransportFormData } from './services/authService';
+import { DatabaseService } from './model/authService';
+import type { TransportFormData } from './model/authService';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -128,3 +128,6 @@ const styles = StyleSheet.create({
 });
 
 export default Login;
+
+// TODO: create signup page
+// TOTDO: add crpyt to password

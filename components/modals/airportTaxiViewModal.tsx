@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, Button, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import airportTaxiRotationService from '../services/airportTaxiRotationService';
+import airportTaxiRotationService from '../../app/model/airportTaxiRotationService';
 
 interface AirportTaxiViewModalProps {
   modalVisible: boolean;
@@ -52,6 +52,10 @@ const AirportTaxiViewModal: React.FC<AirportTaxiViewModalProps> = ({ modalVisibl
         <View style={styles.modalView}>
           <Text style={styles.modalText}>N* D'ORDRE: {airport_taxi_id} N EXPLOITANTS: {editData.numero_exploitants}</Text>
           <Button title="Close" onPress={() => setModalVisible(false)} />
+            <Button title="Add fiche control" onPress={() => {
+                        setModalVisible(false);
+                        router.push(`../../fiche/control?airport_taxi_rotation_id=${airport_taxi_id}`);
+                      }} />
         </View>
       </View>
     </Modal>

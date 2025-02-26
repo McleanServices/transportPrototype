@@ -17,17 +17,23 @@ import * as Print from "expo-print";
 import { shareAsync } from "expo-sharing";
 import FaultsModal from "../../../components/FaultsModal";
 import StationModal from "../../../components/StationModal";
-import { Asset } from 'expo-asset';
-import { manipulateAsync } from 'expo-image-manipulator';
-import { useStorageState } from '../../../context/useStorageState';
-import { useLocalSearchParams } from 'expo-router';
+import { Asset } from "expo-asset";
+import { manipulateAsync } from "expo-image-manipulator";
+import { useStorageState } from "../../../context/useStorageState";
+import { useLocalSearchParams } from "expo-router";
+import ucvFormService, { UCVFormData } from "../../model/ucvformService";
+import { SQLiteProvider } from "expo-sqlite";
 
 
 const Control = () => {
-  const asset = Asset.fromModule(require('../../../assets/images/logo.png'));
+  
+  const asset = Asset.fromModule(require("../../../assets/images/logo.png"));
 
-  const { control_id } = useLocalSearchParams();
-  console.log('Local Search Params ID Control ID is:', control_id);
+  const { airport_taxi_rotation_id } = useLocalSearchParams();
+  console.log(
+    "Local Search Params ID Control ID is:",
+    airport_taxi_rotation_id
+  );
 
   const scrollViewRef = useRef<ScrollView | null>(null);
   const [dateTime, setDateTime] = useState(new Date());
@@ -56,19 +62,86 @@ const Control = () => {
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
 
-  const [storedNom] = useStorageState('nom');
-  const [storedPrenom] = useStorageState('prenom');
-  const [storedRole] = useStorageState('role');
+  const [storedNom] = useStorageState("nom");
+  const [storedPrenom] = useStorageState("prenom");
+  const [storedRole] = useStorageState("role");
+  const [formExists, setFormExists] = useState(false);
 
   useEffect(() => {
     const [loading, nom] = storedNom || [false, null];
     const [loadingPrenom, prenom] = storedPrenom || [false, null];
     const [loadingRole, role] = storedRole || [false, null];
-    console.log('Stored Nom:', !loading ? nom : 'loading...');
-    console.log('Stored Prenom:', !loadingPrenom ? prenom : 'loading...');
-    console.log('Stored Role:', !loadingRole ? role : 'loading...');
-
+    console.log("Stored Nom:", !loading ? nom : "loading...");
+    console.log("Stored Prenom:", !loadingPrenom ? prenom : "loading...");
+    console.log("Stored Role:", !loadingRole ? role : "loading...");
   }, [storedNom, storedPrenom, storedRole]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const initDB = async () => {
+      try {
+        await ucvFormService.initDatabase();
+        console.log("Database initialized successfully");
+      } catch (error) {
+        console.error("Error initializing database:", error);
+      }
+    };
+
+    initDB();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkExistingForm = async () => {
+      if (!airport_taxi_rotation_id) return;
+
+      try {
+        console.log(
+          "Checking if form exists for rotation ID:",
+          airport_taxi_rotation_id
+        );
+        const exists = await ucvFormService.checkFormExists(
+          Number(airport_taxi_rotation_id)
+        );
+        setFormExists(exists);
+
+        if (exists) {
+          const formData = await ucvFormService.getFormByRotationId(
+            Number(airport_taxi_rotation_id)
+          );
+          if (formData) {
+            setStation(formData.station || "");
+            setChauffeurNom(formData.chauffeur_nom || "");
+            setChauffeurPrenom(formData.chauffeur_prenom || "");
+            setDateNaissance(formData.date_naissance || "");
+            setLieuNaissance(formData.lieu_naissance || "");
+            setDomicile(formData.domicile || "");
+            setOccupation(formData.occupation || "");
+            setDocumentReleve(formData.document_releve || "");
+            setCarteProNum(formData.carte_pro_num || "");
+            setAutorisationNum(formData.autorisation_num || "");
+            setValiditeAutorisation(formData.validite_autorisation || "");
+            setObservation(formData.observation || "");
+            setTaxiNumero(formData.taxi_numero || "");
+            setImmatriculation(formData.immatriculation || "");
+            setTypeMarque(formData.type_marque || "");
+            setCouleurVehicule(formData.couleur_vehicule || "");
+          }
+          alert(
+            "Form data loaded for this rotation ID. Form is in read-only mode."
+          );
+        }
+      } catch (error) {
+        console.error("Error checking existing form:", error);
+      }
+    };
+
+    checkExistingForm();
+  }, [airport_taxi_rotation_id]);
 
   const stations = ["Marigot", "Grand Case"];
   const occupations = ["Taxi Driver", "Transport Operator"];
@@ -93,7 +166,9 @@ const Control = () => {
   };
 
   const printToFile = async () => {
-    const image = await manipulateAsync(asset.localUri ?? asset.uri, [], { base64: true });
+    const image = await manipulateAsync(asset.localUri ?? asset.uri, [], {
+      base64: true,
+    });
     const html = `
       <!DOCTYPE html>
 <html lang="en">
@@ -197,9 +272,9 @@ const Control = () => {
     <div class="info-section">
         <p>Station: ${station}</p>
         <p>Date: ${dateTime.toLocaleString()}</p>
-        <p>Nom: ${storedNom?.[1] || ''} 
-           Prenom: ${storedPrenom?.[1] || ''} 
-           Poste occupe: ${storedRole?.[1] || ''}</p>
+        <p>Nom: ${storedNom?.[1] || ""} 
+           Prenom: ${storedPrenom?.[1] || ""} 
+           Poste occupe: ${storedRole?.[1] || ""}</p>
     </div>
 
     <table>
@@ -218,7 +293,7 @@ const Control = () => {
                     Occupation: ${occupation}<br>
                     <div>Observations: ${observation}</div>
                 </td>
-                <td style="width: 50%;">${selectedFaults.join('<br>')}</td>
+                <td style="width: 50%;">${selectedFaults.join("<br>")}</td>
             </tr>
             <tr>
                 <td style="width: 50%;">Personne informée de l'incident:</td>
@@ -265,315 +340,345 @@ const Control = () => {
     await shareAsync(uri, { UTI: ".pdf", mimeType: "application/pdf" });
   };
 
+  const handleSubmit = async () => {
+    try {
+      const formData: UCVFormData = {
+        airprt_taxi_rotation_id: Number(airport_taxi_rotation_id),
+        station: station,
+        nom: storedNom?.[1] || "",
+        prenom: storedPrenom?.[1] || "",
+        role: storedRole?.[1] || "",
+        chauffeur_nom: chauffeurNom,
+        chauffeur_prenom: chauffeurPrenom,
+        date_naissance: dateNaissance,
+        lieu_naissance: lieuNaissance,
+        domicile: domicile,
+        occupation: occupation,
+        document_releve: documentReleve,
+        carte_pro_num: carteProNum,
+        autorisation_num: autorisationNum,
+        validite_autorisation: validiteAutorisation,
+        observation: observation,
+        taxi_numero: taxiNumero,
+        immatriculation: immatriculation,
+        type_marque: typeMarque,
+        couleur_vehicule: couleurVehicule,
+      };
+
+      const id = await ucvFormService.create(formData);
+      console.log("Created UCV form with ID:", id);
+      await ucvFormService.getAllForms();
+      alert("Form submitted successfully!");
+      setFormExists(true); // Set form as existing after successful submission
+    } catch (error) {
+      console.error("Error creating UCV form:", error);
+      alert("Error submitting form. Please try again.");
+    }
+  };
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentInsetAdjustmentBehavior="automatic"
-        >
-          <View style={styles.inner}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center", // Add this
-                padding: 10,
-                width: "100%", // Add this
-              }}
-            >
-              <Image
-                source={require("../../../assets/images/logo.png")}
-                style={{ width: 100, height: 70, marginRight: 20 }} // Reduced marginRight
-              />
-              <View style={{
-                alignItems: "center",
-                flex: 1, // Add this
-                maxWidth: "70%" // Add this to prevent text from stretching too wide
-              }}>
-                <Text
-                  style={{ fontSize: 24, fontWeight: "bold", color: "green", textAlign: "center" }}
+    <SQLiteProvider databaseName="transport.db">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentInsetAdjustmentBehavior="automatic"
+          >
+            <View style={styles.inner}>
+              {/* Header Section */}
+              <View style={styles.headerContainer}>
+                <Image
+                  source={require("../../../assets/images/logo.png")}
+                  style={styles.logo}
+                />
+                <View style={styles.headerTextContainer}>
+                  <Text style={styles.headerTitle}>
+                    Fiche d'Information – Unité Contrôle et Vérification (UCV)
+                  </Text>
+                  <Text style={styles.headerSubtitle}>
+                    DIRECTION TRANSPORT ET REGLEMENTATIONS – Service des Activités
+                    Règlementées
+                  </Text>
+                  <Text style={styles.headerDate}>{dateTime.toLocaleString()}</Text>
+                </View>
+              </View>
+  
+              {/* Station de Taxi Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Station de Taxi:</Text>
+                <TouchableOpacity
+                  onPress={() => setStationModalVisible(true)}
+                  style={styles.input}
                 >
-                  Fiche d'Information – Unité Contrôle et Vérification (UCV)
-                </Text>
-                <Text style={{ fontSize: 18, textAlign: "center" }}>
-                  DIRECTION TRANSPORT ET REGLEMENTATIONS – Service des Activités
-                  Règlementées
-                </Text>
-                <Text style={{ fontSize: 16, textAlign: "center" }}>
-                  {dateTime.toLocaleString()}
-                </Text>
+                  <Text style={styles.inputText}>{station || "Select Station"}</Text>
+                </TouchableOpacity>
+                <StationModal
+                  modalVisible={stationModalVisible}
+                  setModalVisible={setStationModalVisible}
+                  selectedStation={station}
+                  setSelectedStation={setStation}
+                />
               </View>
-            </View>
-            <View style={{ padding: 10 }}>
-              <Text style={styles.heading}>Station de Taxi:</Text>
-              <TouchableOpacity
-                onPress={() => setStationModalVisible(true)}
-                style={styles.input}
-              >
-                <Text>{station || "Select Station"}</Text>
-              </TouchableOpacity>
-              <StationModal
-                modalVisible={stationModalVisible}
-                setModalVisible={setStationModalVisible}
-                selectedStation={station}
-                setSelectedStation={setStation}
-              />
-            </View>
-            <View style={{ padding: 10 }}>
-              <Text>Nom:</Text>
-              <View style={styles.input}>
-                <Text>{storedNom?.[1] || ''}</Text>
-              </View>
-              <Text>Prénom:</Text>
-              <View style={styles.input}>
-                <Text>{storedPrenom?.[1] || ''}</Text>
-              </View>
-              <Text>Role:</Text>
-              <View style={styles.input}>
-                <Text>{storedRole?.[1] || ''}</Text>
-              </View>
-            </View>
-            <View style={{ padding: 10 }}>
-              <Text style={styles.heading}>Assistants (if any)</Text>
-              {assistants.map((assistant, index) => (
-                <View key={index} style={{ marginBottom: 10 }}>
-                  <Text>Nom:</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Nom"
-                    value={assistant.nom}
-                    onChangeText={(text) => updateAssistant(index, "nom", text)}
-                  />
-                  <Text>Prénom:</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Prénom"
-                    value={assistant.prenom}
-                    onChangeText={(text) =>
-                      updateAssistant(index, "prenom", text)
-                    }
-                  />
-                  <Button
-                    title="Remove Assistant"
-                    onPress={() => removeAssistant(index)}
-                  />
+  
+              {/* User Information Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Informations Personnelles:</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Nom:</Text>
+                  <View style={styles.input}>
+                    <Text style={styles.inputText}>{storedNom?.[1] || ""}</Text>
+                  </View>
                 </View>
-              ))}
-              <Button title="Add Assistant" onPress={addAssistant} />
-            </View>
-            <View style={{ padding: 10 }}>
-              <Text style={styles.heading}>Mise en Cause</Text>
-              <Text>Nom du Chauffeur:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Nom"
-                value={chauffeurNom}
-                onChangeText={setChauffeurNom}
-              />
-              <Text>Prénom:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Prénom"
-                value={chauffeurPrenom}
-                onChangeText={setChauffeurPrenom}
-              />
-              <Text>Né(e) le:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Date de Naissance"
-                value={dateNaissance}
-                onChangeText={setDateNaissance}
-              />
-              <Text>Lieu de Naissance:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Lieu de Naissance"
-                value={lieuNaissance}
-                onChangeText={setLieuNaissance}
-              />
-              <Text>Domicile:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Domicile"
-                value={domicile}
-                onChangeText={setDomicile}
-              />
-              <Text>Occupation:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Occupation"
-                value={occupation}
-                onChangeText={setOccupation}
-              />
-              <Text>Document releve:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Document releve"
-                value={documentReleve}
-                onChangeText={setDocumentReleve}
-              />
-              <Text>Carte professionnelle N°:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Carte professionnelle N°"
-                value={carteProNum}
-                onChangeText={setCarteProNum}
-              />
-              <Text>Autorisation de circulation N°:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Autorisation de circulation N°"
-                value={autorisationNum}
-                onChangeText={setAutorisationNum}
-              />
-              <Text>
-                Avis sur demande de changement de vehicule date de validité:
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Validité de l'autorisation"
-                value={validiteAutorisation}
-                onChangeText={setValiditeAutorisation}
-              />
-            </View>
-            <View style={{ padding: 10 }}>
-              <Text style={styles.heading}>Observation:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Observation"
-                value={observation}
-                onChangeText={setObservation}
-              />
-              <Text>Taxi numero:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Taxi numero"
-                value={taxiNumero}
-                onChangeText={setTaxiNumero}
-              />
-              <Text>Immatriculation:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Immatriculation"
-                value={immatriculation}
-                onChangeText={setImmatriculation}
-              />
-              <Text>Type et Marque:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Type et Marque"
-                value={typeMarque}
-                onChangeText={setTypeMarque}
-              />
-              <Text>Couleur de vehicule:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Couleur de vehicule"
-                value={couleurVehicule}
-                onChangeText={setCouleurVehicule}
-              />
-            </View>
-            <View style={{ padding: 10 }}>
-              <Text style={styles.heading}>Faute(s) commise(s):</Text>
-              <TouchableOpacity
-                onPress={() => setFaultsModalVisible(true)}
-                style={styles.input}
-              >
-                <Text>Select Faults</Text>
-              </TouchableOpacity>
-              <FaultsModal
-                modalVisible={faultsModalVisible}
-                setModalVisible={setFaultsModalVisible}
-                selectedFaults={selectedFaults}
-                setSelectedFaults={setSelectedFaults}
-              />
-              {selectedFaults.length > 0 && (
-                <View style={{ marginTop: 10 }}>
-                  {selectedFaults.map((fault, index) => (
-                    <Text key={index} style={styles.selectedFaultText}>
-                      {fault}
-                    </Text>
-                  ))}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Prénom:</Text>
+                  <View style={styles.input}>
+                    <Text style={styles.inputText}>{storedPrenom?.[1] || ""}</Text>
+                  </View>
                 </View>
-              )}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Role:</Text>
+                  <View style={styles.input}>
+                    <Text style={styles.inputText}>{storedRole?.[1] || ""}</Text>
+                  </View>
+                </View>
+              </View>
+  
+              {/* Assistants Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Assistants (if any)</Text>
+                {assistants.map((assistant, index) => (
+                  <View key={index} style={styles.assistantContainer}>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Nom:</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Nom"
+                        value={assistant.nom}
+                        onChangeText={(text) => updateAssistant(index, "nom", text)}
+                        editable={!formExists}
+                      />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Prénom:</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Prénom"
+                        value={assistant.prenom}
+                        onChangeText={(text) => updateAssistant(index, "prenom", text)}
+                        editable={!formExists}
+                      />
+                    </View>
+                    <Button
+                      title="Remove Assistant"
+                      onPress={() => removeAssistant(index)}
+                      disabled={formExists}
+                      color="#ff4444"
+                    />
+                  </View>
+                ))}
+                <Button
+                  title="Add Assistant"
+                  onPress={addAssistant}
+                  disabled={formExists}
+                  color="#4CAF50"
+                />
+              </View>
+  
+              {/* Mise en Cause Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Mise en Cause</Text>
+                {[
+                  { label: "Nom du Chauffeur:", value: chauffeurNom, setter: setChauffeurNom },
+                  { label: "Prénom:", value: chauffeurPrenom, setter: setChauffeurPrenom },
+                  { label: "Né(e) le:", value: dateNaissance, setter: setDateNaissance },
+                  { label: "Lieu de Naissance:", value: lieuNaissance, setter: setLieuNaissance },
+                  { label: "Domicile:", value: domicile, setter: setDomicile },
+                  { label: "Occupation:", value: occupation, setter: setOccupation },
+                  { label: "Document relevé:", value: documentReleve, setter: setDocumentReleve },
+                  { label: "Carte professionnelle N°:", value: carteProNum, setter: setCarteProNum },
+                  { label: "Autorisation de circulation N°:", value: autorisationNum, setter: setAutorisationNum },
+                  { label: "Validité de l'autorisation:", value: validiteAutorisation, setter: setValiditeAutorisation },
+                ].map((field, index) => (
+                  <View key={index} style={styles.inputGroup}>
+                    <Text style={styles.label}>{field.label}</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={field.label}
+                      value={field.value}
+                      onChangeText={field.setter}
+                      editable={!formExists}
+                    />
+                  </View>
+                ))}
+              </View>
+  
+              {/* Observation Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Observation:</Text>
+                {[
+                  { label: "Observation:", value: observation, setter: setObservation },
+                  { label: "Taxi numero:", value: taxiNumero, setter: setTaxiNumero },
+                  { label: "Immatriculation:", value: immatriculation, setter: setImmatriculation },
+                  { label: "Type et Marque:", value: typeMarque, setter: setTypeMarque },
+                  { label: "Couleur de vehicule:", value: couleurVehicule, setter: setCouleurVehicule },
+                ].map((field, index) => (
+                  <View key={index} style={styles.inputGroup}>
+                    <Text style={styles.label}>{field.label}</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={field.label}
+                      value={field.value}
+                      onChangeText={field.setter}
+                      editable={!formExists}
+                    />
+                  </View>
+                ))}
+              </View>
+  
+              {/* Faults Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Faute(s) commise(s):</Text>
+                <TouchableOpacity
+                  onPress={() => setFaultsModalVisible(true)}
+                  style={styles.input}
+                  disabled={formExists}
+                >
+                  <Text style={styles.inputText}>Select Faults</Text>
+                </TouchableOpacity>
+                <FaultsModal
+                  modalVisible={faultsModalVisible}
+                  setModalVisible={setFaultsModalVisible}
+                  selectedFaults={selectedFaults}
+                  setSelectedFaults={setSelectedFaults}
+                />
+                {selectedFaults.length > 0 && (
+                  <View style={styles.selectedFaultsContainer}>
+                    {selectedFaults.map((fault, index) => (
+                      <Text key={index} style={styles.selectedFaultText}>
+                        {fault}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+  
+              {/* Buttons Section */}
+              <View style={styles.buttonContainer}>
+                <Button
+                  title={formExists ? "Form Already Exists" : "Submit"}
+                  onPress={handleSubmit}
+                  disabled={formExists}
+                  color="#4CAF50"
+                />
+                <Button title="Print to PDF file" onPress={printToFile} color="#2196F3" />
+              </View>
             </View>
-            <View style={styles.btnContainer}>
-              <Button title="Submit" onPress={() => null} />
-              <Button title="Print to PDF file" onPress={printToFile} />
-            </View>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SQLiteProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingLeft: 8,
-    justifyContent: "center",
-  },
   container: {
     flex: 1,
+    backgroundColor: "#f8f9fa",
   },
   scrollContainer: {
     flexGrow: 1,
+    paddingVertical: 20,
   },
   inner: {
-    padding: 24,
-    flexGrow: 1,
+    paddingHorizontal: 16,
   },
-  header: {
-    fontSize: 36,
-    marginBottom: 20,
-    textAlign: "center",
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
   },
-  textInput: {
-    height: 40,
-    borderColor: "#000000",
-    borderBottomWidth: 1,
-    marginBottom: 20,
-    paddingHorizontal: 10,
+  logo: {
+    width: 80,
+    height: 56,
+    marginRight: 16,
   },
-  btnContainer: {
-    backgroundColor: "white",
-    marginTop: 12,
+  headerTextContainer: {
+    flex: 1,
   },
-  dropdown: {
-    borderColor: "gray",
-    borderWidth: 1,
-    marginTop: 5,
-    backgroundColor: "white",
-    position: "absolute",
-    zIndex: 1,
-    width: "100%",
-  },
-  dropdownItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "gray",
-  },
-  heading: {
+  headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    color: "#333",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  headerDate: {
+    fontSize: 12,
+    color: "#999",
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 12,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#333",
+  },
+  inputText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  assistantContainer: {
+    marginBottom: 16,
+  },
+  selectedFaultsContainer: {
+    marginTop: 12,
   },
   selectedFaultText: {
-    fontSize: 16,
-    color: "blue",
+    fontSize: 14,
+    color: "#2196F3",
+    marginBottom: 8,
+  },
+  buttonContainer: {
+    marginTop: 24,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 });
 
 export default Control;
+
+//TODO: Add missing input for personne informe de l'incident(update sql services too)
+//TODO: Add missing codes cival to the pdf
+//TODO: Automatically disabling submit button it after clicking it
+//TODO: clean up pdf file text grammar/spelling mistakes etc..

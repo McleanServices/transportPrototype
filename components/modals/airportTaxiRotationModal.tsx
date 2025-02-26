@@ -2,40 +2,43 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, Button, StyleSheet, TextInput } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
-interface BusRotationModalProps {
+
+interface AirportTaxiRotationModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
   onFormSubmit: (formData: any) => void;
 }
 
-const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setModalVisible, onFormSubmit }) => {
+const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ modalVisible, setModalVisible, onFormSubmit }) => {
   const [formData, setFormData] = useState({
     exploitants: '',
-    arrivalTime: new Date(),
-    departureTime: null,
-    passengers: null,
-    observations: null,
+    destination: '',
+    passengerCount: 0,
+    observations: '',
+    date: new Date(),
   });
 
-  const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [isArrivalTimePickerVisible, setArrivalTimePickerVisibility] = useState(false);
-  const exploitantsOptions = ['111', '123', '138', '145', '159'];
-
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [errors, setErrors] = useState({
     exploitants: '',
-    arrivalTime: '',
+    destination: '',
+    date: '',
   });
 
   const validateForm = () => {
     let valid = true;
-    let newErrors = { exploitants: '', arrivalTime: '' };
+    let newErrors = { exploitants: '', destination: '', date: '' };
 
     if (!formData.exploitants) {
       newErrors.exploitants = 'Exploitants is required';
       valid = false;
     }
-    if (!formData.arrivalTime) {
-      newErrors.arrivalTime = 'Arrival time is required';
+    if (!formData.destination) {
+      newErrors.destination = 'Destination is required';
+      valid = false;
+    }
+    if (!formData.date) {
+      newErrors.date = 'Date is required';
       valid = false;
     }
 
@@ -54,45 +57,39 @@ const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setMo
     try {
       const dataToSubmit = {
         numero_exploitants: formData.exploitants,
-        order_number: 1,
-        bus_type_id: 1,
-        date: new Date().toISOString().split('T')[0],
-        arrival_time: formData.arrivalTime.toISOString(),
-        departure_time: formData.departureTime ?? null,
-        passenger_count: Number(formData.passengers) || 0,
+        order_number: 1, // Default value, update as needed
+        taxi_id: 1, // Default value, update as needed
+        airline_id: 1, // Default value, update as needed
+        destination: formData.destination,
+        passenger_count: formData.passengerCount,
         observations: formData.observations ?? null,
+        date: formData.date.toISOString().split('T')[0], // Current date
+        airline_name: '1',
       };
 
       await onFormSubmit(dataToSubmit);
       setModalVisible(false);
-      setFormData({
-        exploitants: '',
-        arrivalTime: new Date(),
-        departureTime: null,
-        passengers: null,
-        observations: null,
-      });
     } catch (error) {
-      console.error('Error processing form submission:', error);
-      alert('An error occurred. Please try again.');
+      console.error('Error saving data', error);
+      alert('An error occurred while saving data. Please try again.');
     }
   };
 
-  const showArrivalTimePicker = () => {
-    setArrivalTimePickerVisibility(true);
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
   };
 
-  const hideArrivalTimePicker = () => {
-    setArrivalTimePickerVisibility(false);
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
   };
 
-  const handleArrivalTimeConfirm = (date: Date) => {
-    handleInputChange('arrivalTime', date);
-    hideArrivalTimePicker();
+  const handleDateConfirm = (date: Date) => {
+    handleInputChange('date', date);
+    hideDatePicker();
   };
 
   const isFormValid = () => {
-    return formData.exploitants && formData.arrivalTime;
+    return formData.exploitants && formData.destination && formData.date;
   };
 
   return (
@@ -117,20 +114,31 @@ const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setMo
                 {errors.exploitants ? <Text style={styles.errorText}>{errors.exploitants}</Text> : null}
               </View>
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>HEURE D'ARRIVEE</Text>
+                <Text style={styles.label}>DESTINATION</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.destination}
+                  onChangeText={(text) => handleInputChange('destination', text)}
+                />
+                {errors.destination ? <Text style={styles.errorText}>{errors.destination}</Text> : null}
+              </View>
+            </View>
+            <View style={styles.inputRow}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>DATE</Text>
                 <TouchableOpacity
                   style={styles.input}
-                  onPress={showArrivalTimePicker}
+                  onPress={showDatePicker}
                 >
-                  <Text>{formData.arrivalTime.toLocaleTimeString()}</Text>
+                  <Text>{formData.date.toLocaleDateString()}</Text>
                 </TouchableOpacity>
                 <DateTimePickerModal
-                  isVisible={isArrivalTimePickerVisible}
-                  mode="time"
-                  onConfirm={handleArrivalTimeConfirm}
-                  onCancel={hideArrivalTimePicker}
+                  isVisible={isDatePickerVisible}
+                  mode="date"
+                  onConfirm={handleDateConfirm}
+                  onCancel={hideDatePicker}
                 />
-                {errors.arrivalTime ? <Text style={styles.errorText}>{errors.arrivalTime}</Text> : null}
+                {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
               </View>
             </View>
             <Button title="Submit" onPress={handleSubmit} disabled={!isFormValid()} />
@@ -197,27 +205,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
   },
-  dropdown: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    marginBottom: 15,
-  },
-  dropdownList: {
-    position: 'absolute',
-    top: 45,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    borderColor: 'gray',
-    borderWidth: 1,
-    zIndex: 1,
-  },
-  dropdownItem: {
-    padding: 10,
-  },
   errorText: {
     color: 'red',
     fontSize: 12,
@@ -226,4 +213,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BusRotationModal;
+export default AirportTaxiRotationModal;

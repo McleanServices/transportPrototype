@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, Button, StyleSheet, TextInput, Image } from 'react-native';
 import { router } from 'expo-router';
-import busRotationService from '../services/busRotationService';
+import busRotationService from '../app/model/busRotationService';
 
 // Rename FormData to TransportFormData to avoid conflict
 interface ViewModalProps {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, Button, StyleSheet, TextInput } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import databaseService from '../services/databaseService';
+import databaseService from '../../test/databaseService';
 
 interface ModalFormProps {
   modalVisible: boolean;

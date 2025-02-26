@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import databaseService from '../services/databaseService';
+import databaseService from './databaseService';
 
 export interface TransportFormData {
   id?: number;
@@ -10,6 +10,8 @@ export interface TransportFormData {
   observations: string | null;
   order?: number;
 }
+
+
 
 export function useTransportData() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -25,6 +27,12 @@ export function useTransportData() {
     } catch (error) {
       console.error('Error fetching data from database', error);
       setData([]);
+    }
+    try {
+      const tableNames = await databaseService.getAllTableNames();
+      console.log('Tables in the database:', tableNames);
+    } catch (error) {
+      console.error('Error fetching table names:', error);
     }
   };
 

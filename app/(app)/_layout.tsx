@@ -1,6 +1,6 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import { Text, View, Pressable, Animated, Image } from 'react-native'; 
+import { Text, View, Pressable, Animated } from 'react-native'; 
 import { Redirect} from 'expo-router';
 import { useAuth } from '../../context/auth';
 import React from 'react';
@@ -12,8 +12,8 @@ import HeaderTitle from '../../components/HeaderTitle';
 export default function Layout() {
 
   const { session, isLoading } = useAuth();
-  const bounceAnimation = new Animated.Value(0);
-  const [storedEmail] = useStorageState('email');
+  const bounceAnimation = React.useMemo(() => new Animated.Value(0), []);
+  const [storedEmail] = useStorageState('nom');
   const router = useRouter();
 
   React.useEffect(() => {
@@ -31,7 +31,7 @@ export default function Layout() {
         }),
       ])
     ).start();
-  }, []);
+  }, [bounceAnimation]);
 
 
   if (isLoading) {
@@ -72,21 +72,15 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="home" 
-          options={{
-            drawerLabel: 'modal',
-            title: 'overview',
-            drawerItemStyle: { display: 'none' }, 
-          }}
-        />
-        <Drawer.Screen
           name="fiche/control" 
           options={{
+            drawerItemStyle: { display: 'none' },
             drawerLabel: 'fiche',
             headerTitle: () => (
               <HeaderTitle 
                 logoSource={require('../../assets/images/logo.png')} 
                 title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+                
               />
             ),
             title: 'overview',
@@ -96,4 +90,9 @@ export default function Layout() {
       </Drawer>
     </GestureHandlerRootView>
   );
+
+  // TODO: clean up file structure 
+// TODO: fix spelling mistakes
+// TODO: 
+
 }

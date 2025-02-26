@@ -1,40 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import airportTaxiRotationService from '../services/airportTaxiRotationService';
+import databaseService from '../../test/databaseService';
 
-interface EditAirportTaxiRotationModalProps {
+interface EditModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
   formData: any;
   onFormSubmit: (formData: any) => void;
 }
 
-const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
+const EditModal: React.FC<EditModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
   const [editData, setEditData] = useState(formData);
 
   useEffect(() => {
-    const preloadData = async () => {
-      if (formData.airport_taxi_id) {
-        const data = await airportTaxiRotationService.getAirportTaxiRotationById(formData.airport_taxi_id);
-        if (data) {
-          setEditData({
-            ...formData,
-            exploitants: data.numero_exploitants,
-            destination: data.destination,
-            passengerCount: data.passenger_count,
-            observations: data.observations,
-            date: new Date(data.date),
-            airline_name: '1'
-          });
-        }
-      }
-    };
-
-    preloadData();
+    setEditData(formData);
   }, [formData]);
 
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [isArrivalTimePickerVisible, setArrivalTimePickerVisibility] = useState(false);
+  const [isDepartureTimePickerVisible, setDepartureTimePickerVisibility] = useState(false);
+  const exploitantsOptions = ['111', '123', '138', '145', '159'];
 
   const handleInputChange = (name: string, value: any) => {
     setEditData({ ...editData, [name]: value });
@@ -42,30 +28,25 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
 
   const handleSubmit = async () => {
     try {
-      const { airport_taxi_id } = editData;
-      if (!airport_taxi_id) {
+      const { id } = editData;
+      if (!id) {
         console.error('No ID provided for update');
         return;
       }
 
       const dataToUpdate = {
-        numero_exploitants: editData.exploitants,
-        order_number: formData.order_number,
-        taxi_id: formData.taxi_id,
-        airline_id: formData.airline_id,
-        destination: editData.destination,
-        passenger_count: editData.passengerCount,
-        observations: editData.observations,
-        date: new Date(editData.date).toISOString().split('T')[0],
-        airline_name: '1'
+        ...editData,
+        arrivalTime: new Date(editData.arrivalTime).toISOString(),
+        departureTime: editData.departureTime ? new Date(editData.departureTime).toISOString() : null
       };
 
-      const success = await airportTaxiRotationService.updateAirportTaxiRotation(airport_taxi_id, dataToUpdate);
+      const success = await databaseService.updateTransportRecord(id, dataToUpdate);
       
       if (success) {
         console.log('Data updated successfully');
         onFormSubmit(dataToUpdate);
         setModalVisible(false);
+        setEditData({}); // Clear formData after submission
       } else {
         alert('Failed to update record');
       }
@@ -75,17 +56,30 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
     }
   };
 
-  const showDatePicker = () => {
-    setDatePickerVisibility(true);
+  const showArrivalTimePicker = () => {
+    setArrivalTimePickerVisibility(true);
   };
 
-  const hideDatePicker = () => {
-    setDatePickerVisibility(false);
+  const hideArrivalTimePicker = () => {
+    setArrivalTimePickerVisibility(false);
   };
 
-  const handleDateConfirm = (date: Date) => {
-    handleInputChange('date', date);
-    hideDatePicker();
+  const handleArrivalTimeConfirm = (date: Date) => {
+    handleInputChange('arrivalTime', date);
+    hideArrivalTimePicker();
+  };
+
+  const showDepartureTimePicker = () => {
+    setDepartureTimePickerVisibility(true);
+  };
+
+  const hideDepartureTimePicker = () => {
+    setDepartureTimePickerVisibility(false);
+  };
+
+  const handleDepartureTimeConfirm = (date: Date) => {
+    handleInputChange('departureTime', date);
+    hideDepartureTimePicker();
   };
 
   return (
@@ -110,28 +104,35 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
                   />
                 </View>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>DESTINATION</Text>
-                  <TextInput
+                  <Text style={styles.label}>HEURE D'ARRIVEE</Text>
+                  <TouchableOpacity
                     style={styles.input}
-                    value={editData.destination}
-                    onChangeText={(text) => handleInputChange('destination', text)}
+                    onPress={showArrivalTimePicker}
+                  >
+                    <Text>{new Date(editData.arrivalTime).toLocaleTimeString()}</Text>
+                  </TouchableOpacity>
+                  <DateTimePickerModal
+                    isVisible={isArrivalTimePickerVisible}
+                    mode="time"
+                    onConfirm={handleArrivalTimeConfirm}
+                    onCancel={hideArrivalTimePicker}
                   />
                 </View>
               </View>
               <View style={styles.inputRow}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>DATE</Text>
+                  <Text style={styles.label}>HEURE DE DEPART</Text>
                   <TouchableOpacity
                     style={styles.input}
-                    onPress={showDatePicker}
+                    onPress={showDepartureTimePicker}
                   >
-                    <Text>{new Date(editData.date).toLocaleDateString()}</Text>
+                    <Text>{new Date(editData.departureTime).toLocaleTimeString()}</Text>
                   </TouchableOpacity>
                   <DateTimePickerModal
-                    isVisible={isDatePickerVisible}
-                    mode="date"
-                    onConfirm={handleDateConfirm}
-                    onCancel={hideDatePicker}
+                    isVisible={isDepartureTimePickerVisible}
+                    mode="time"
+                    onConfirm={handleDepartureTimeConfirm}
+                    onCancel={hideDepartureTimePicker}
                   />
                 </View>
                 <View style={styles.inputContainer}>
@@ -139,8 +140,8 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
                   <TextInput
                     style={styles.input}
                     placeholder="N PASSAGERS"
-                    value={editData.passengerCount}
-                    onChangeText={(value) => handleInputChange('passengerCount', value)}
+                    value={editData.passengers}
+                    onChangeText={(value) => handleInputChange('passengers', value)}
                   />
                 </View>
               </View>
@@ -239,4 +240,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditAirportTaxiRotationModal;
+export default EditModal;

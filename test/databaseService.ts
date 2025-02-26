@@ -295,6 +295,32 @@ class DatabaseService {
       throw error;
     }
   }
+
+  /**
+   * Get all table names in the database
+   */
+  async getAllTableNames(): Promise<string[]> {
+    try {
+      const db = await SQLite.openDatabaseAsync(this.dbName);
+      let tableNames: string[] = [];
+
+      await db.withTransactionAsync(async () => {
+        const result = await db.getAllAsync(`
+          SELECT name FROM sqlite_master WHERE type='table'
+        `);
+
+        if (result && Array.isArray(result)) {
+          tableNames = result.map(row => (row as { name: string }).name);
+        }
+      });
+
+      await db.closeAsync();
+      return tableNames;
+    } catch (error) {
+      console.error('Error getting table names:', error);
+      throw error;
+    }
+  }
 }
 
 // Create a singleton instance

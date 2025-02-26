@@ -1,39 +1,106 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
 import { SQLiteProvider } from 'expo-sqlite'; // Ensure this import is correct
-import { useAirportTaxiRotationData } from '../hooks/useAirportTaxiRotationData';
-import AirportTaxiRotationModal from '../modals/airportTaxiRotationModal';
-import EditAirportTaxiRotationModal from '../modals/editAirportTaxiRotationModal';
-import AirportTaxiViewModal from '../modals/airportTaxiViewModal';
+import airportTaxiRotationService from '../model/airportTaxiRotationService';
+
+import AirportTaxiRotationModal from '../../components/modals/airportTaxiRotationModal';
+import EditAirportTaxiRotationModal from '../../components/modals/editAirportTaxiRotationModal';
+import AirportTaxiViewModal from '../../components/modals/airportTaxiViewModal';
+
+export interface AirportTaxiRotationFormData {
+  airport_taxi_id?: number;
+  numero_exploitants: string;
+  order_number: number;
+  taxi_id: number;
+  airline_id: number;
+  destination: string;
+  passenger_count: number;
+  observations: string | null;
+  date: string;
+  created_at?: string;
+  airline_name: string;
+}
 
 export default function AirportTaxiRotationFiche() {
-  const {
-    modalVisible,
-    setModalVisible,
-    data,
-    selectedRow,
-    editModalVisible,
-    setEditModalVisible,
-    viewModalVisible,
-    setViewModalVisible,
-    handleFormSubmit,
-    handleEditFormSubmit,
-    handleRowSelect,
-    handleEditPress,
-    handleViewPress,
-    refreshData, // Make sure this is available from the hook
-  } = useAirportTaxiRotationData();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [data, setData] = useState<AirportTaxiRotationFormData[]>([]);
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
 
-  const handleModalSubmit = async (formData: any) => {
+  const fetchData = async () => {
     try {
-      await handleFormSubmit(formData);
-      await refreshData(); // Refresh the data after submission
+      const records = await airportTaxiRotationService.getAllAirportTaxiRotations();
+      setData(records);
     } catch (error) {
-      console.error('Error handling form submission:', error);
-      alert('An error occurred while saving the data.');
+      console.error('Error fetching data from database', error);
+      setData([]);
     }
   };
+
+  const refreshData = async () => {
+    await fetchData();
+  };
+
+  const handleFormSubmit = async (newFormData: AirportTaxiRotationFormData) => {
+    try {
+      const newId = await airportTaxiRotationService.createAirportTaxiRotation(newFormData);
+      if (newId) {
+        await refreshData(); // Refresh data after successful insertion
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error creating new record', error);
+      throw error;
+    }
+  };
+
+  const handleEditFormSubmit = async (updatedFormData: AirportTaxiRotationFormData) => {
+    if (selectedRow === null) return;
+
+    try {
+      const airport_taxi_id = data[selectedRow]?.airport_taxi_id;
+      if (airport_taxi_id !== undefined) {
+        const success = await airportTaxiRotationService.updateAirportTaxiRotation(airport_taxi_id, updatedFormData);
+        if (success) {
+          await fetchData();
+          setEditModalVisible(false);
+        } else {
+          console.error('Failed to update record');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating record', error);
+    }
+  };
+
+  const handleRowSelect = (index: number) => {
+    setSelectedRow((prevSelectedRow) => (prevSelectedRow === index ? null : index));
+  };
+
+  const handleEditPress = () => {
+    setEditModalVisible(true);
+  };
+
+  const handleViewPress = (index: number) => {
+    setSelectedRow(index);
+    setViewModalVisible(true);
+  };
+
+  useEffect(() => {
+    const initAndFetch = async () => {
+      try {
+        await airportTaxiRotationService.initDatabase();
+        await fetchData();
+      } catch (error) {
+        console.error('Error initializing database:', error);
+      }
+    };
+    
+    initAndFetch();
+  }, []);
 
   return (
     <SQLiteProvider databaseName="transport.db">
@@ -99,7 +166,7 @@ export default function AirportTaxiRotationFiche() {
         <AirportTaxiRotationModal 
           modalVisible={modalVisible} 
           setModalVisible={setModalVisible} 
-          onFormSubmit={handleModalSubmit} // Use the new handler
+          onFormSubmit={handleFormSubmit} // Use the new handler
         />
         {selectedRow !== null && (
           <EditAirportTaxiRotationModal

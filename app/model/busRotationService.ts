@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-interface BusRotationData {
+export interface BusRotationData {
   bus_rotation_id?: number;
   numero_exploitants: string;
   order_number: number;
@@ -16,13 +16,13 @@ interface BusRotationData {
 class BusRotationService {
   private dbName: string = 'transport.db';
   private tableName: string = 'bus_daily_rotation';
+  private db: SQLite.SQLiteDatabase | null = null;
 
   async initDatabase(): Promise<void> {
-    let db: SQLite.SQLiteDatabase | null = null;
     try {
-      db = await SQLite.openDatabaseAsync(this.dbName);
-      await db.withTransactionAsync(async () => {
-        await db!.execAsync(`
+      this.db = await SQLite.openDatabaseAsync(this.dbName);
+      await this.db.withTransactionAsync(async () => {
+        await this.db!.execAsync(`
           CREATE TABLE IF NOT EXISTS ${this.tableName} (
             bus_rotation_id INTEGER PRIMARY KEY AUTOINCREMENT,
             numero_exploitants TEXT NOT NULL,
@@ -37,7 +37,7 @@ class BusRotationService {
             FOREIGN KEY (bus_type_id) REFERENCES bus_type(bus_type_id)
           );
         `);
-        await db!.execAsync(`
+        await this.db!.execAsync(`
           CREATE TABLE IF NOT EXISTS bus_type (
             bus_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
             bus_type_name TEXT NOT NULL UNIQUE
@@ -48,20 +48,18 @@ class BusRotationService {
     } catch (error) {
       console.error('Error initializing bus rotation and bus type tables:', error);
       throw error;
-    } finally {
-      if (db) {
-        await db.closeAsync();
-      }
     }
   }
 
   async getAllBusRotations(): Promise<BusRotationData[]> {
     try {
-      const db = await SQLite.openDatabaseAsync(this.dbName);
+      if (!this.db) {
+        this.db = await SQLite.openDatabaseAsync(this.dbName);
+      }
       let records: BusRotationData[] = [];
 
-      await db.withTransactionAsync(async () => {
-        const result = await db.getAllAsync(`
+      await this.db.withTransactionAsync(async () => {
+        const result = await this.db!.getAllAsync(`
           SELECT * FROM ${this.tableName}
           ORDER BY bus_rotation_id ASC
         `);
@@ -71,7 +69,6 @@ class BusRotationService {
         }
       });
       
-      await db.closeAsync();
       return records;
     } catch (error) {
       console.error('Error getting bus rotations:', error);
@@ -81,11 +78,13 @@ class BusRotationService {
 
   async getBusRotationById(bus_rotation_id: number): Promise<BusRotationData | null> {
     try {
-      const db = await SQLite.openDatabaseAsync(this.dbName);
+      if (!this.db) {
+        this.db = await SQLite.openDatabaseAsync(this.dbName);
+      }
       let record: BusRotationData | null = null;
 
-      await db.withTransactionAsync(async () => {
-        const result = await db.getAllAsync(`
+      await this.db.withTransactionAsync(async () => {
+        const result = await this.db!.getAllAsync(`
           SELECT * FROM ${this.tableName}
           WHERE bus_rotation_id = ?
         `, [bus_rotation_id]);
@@ -95,7 +94,6 @@ class BusRotationService {
         }
       });
       
-      await db.closeAsync();
       return record;
     } catch (error) {
       console.error(`Error getting bus rotation with id ${bus_rotation_id}:`, error);
@@ -105,11 +103,13 @@ class BusRotationService {
 
   async createBusRotation(data: BusRotationData): Promise<number> {
     try {
-      const db = await SQLite.openDatabaseAsync(this.dbName);
+      if (!this.db) {
+        this.db = await SQLite.openDatabaseAsync(this.dbName);
+      }
       let newId: number = 0;
 
-      await db.withTransactionAsync(async () => {
-        const result = await db.runAsync(`
+      await this.db.withTransactionAsync(async () => {
+        const result = await this.db!.runAsync(`
           INSERT INTO ${this.tableName} (
             numero_exploitants,
             order_number,
@@ -134,7 +134,6 @@ class BusRotationService {
         newId = result.lastInsertRowId;
       });
       
-      await db.closeAsync();
       return newId;
     } catch (error) {
       console.error('Error creating bus rotation:', error);
@@ -144,11 +143,13 @@ class BusRotationService {
 
   async updateBusRotation(bus_rotation_id: number, data: BusRotationData): Promise<boolean> {
     try {
-      const db = await SQLite.openDatabaseAsync(this.dbName);
+      if (!this.db) {
+        this.db = await SQLite.openDatabaseAsync(this.dbName);
+      }
       let success = false;
 
-      await db.withTransactionAsync(async () => {
-        const result = await db.runAsync(`
+      await this.db.withTransactionAsync(async () => {
+        await this.db!.runAsync(`
           UPDATE ${this.tableName} SET
             numero_exploitants = ?,
             order_number = ?,
@@ -174,7 +175,6 @@ class BusRotationService {
         success = true;
       });
       
-      await db.closeAsync();
       return success;
     } catch (error) {
       console.error(`Error updating bus rotation with id ${bus_rotation_id}:`, error);
@@ -184,18 +184,19 @@ class BusRotationService {
 
   async deleteBusRotation(bus_rotation_id: number): Promise<boolean> {
     try {
-      const db = await SQLite.openDatabaseAsync(this.dbName);
+      if (!this.db) {
+        this.db = await SQLite.openDatabaseAsync(this.dbName);
+      }
       let success = false;
 
-      await db.withTransactionAsync(async () => {
-        await db.runAsync(`
+      await this.db.withTransactionAsync(async () => {
+        await this.db!.runAsync(`
           DELETE FROM ${this.tableName} WHERE bus_rotation_id = ?
         `, [bus_rotation_id]);
         
         success = true;
       });
       
-      await db.closeAsync();
       return success;
     } catch (error) {
       console.error(`Error deleting bus rotation with id ${bus_rotation_id}:`, error);

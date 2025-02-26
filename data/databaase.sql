@@ -4,6 +4,9 @@ CREATE TABLE taxi (
     taxi_number TEXT NOT NULL UNIQUE,
     taxi_type TEXT CHECK(taxi_type IN ('Airport', 'Marigot')) NOT NULL
 );
+// In your app's initialization
+// await airportTaxiRotationService.initDatabase();
+
 
 -- 2. Airline Company Table
 CREATE TABLE airline_company (

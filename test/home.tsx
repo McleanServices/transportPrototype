@@ -1,11 +1,11 @@
 import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
-import ModalForm from '../modals/modal';
-import EditModal from '../modals/editModal';
-import ViewModal from '../modals/viewModal';
+import ModalForm from '../components/modals/modal';
+import EditModal from '../components/modals/editModal';
+import ViewModal from './viewModal';
 import { SQLiteProvider } from 'expo-sqlite';
-import { useTransportData } from '../hooks/useTransportData';
+import { useTransportData } from './useTransportData';
 
 export default function Home() {
   const {

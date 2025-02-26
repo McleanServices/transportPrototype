@@ -1,10 +1,10 @@
 import { useAuth } from '../../context/auth';
-import Home from './home';
+import BusRotationFiche from './busRotationFiche';
 
 export default function Index() {
   const { session } = useAuth();
 
   if (!session) return null;
 
-  return <Home />;
+  return <BusRotationFiche />;
 }
