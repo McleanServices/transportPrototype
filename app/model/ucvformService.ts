@@ -49,12 +49,10 @@ class UCVFormService {
         return this.db;
     }
 
-    async initDatabase(): Promise<void> {
-        try {
-            const db = await this.getDatabase();
-            
-            // Create UCV Forms table
-            await db.execAsync(`
+    private async ensureTablesExist(): Promise<void> {
+        const db = await this.getDatabase();
+        await db.withExclusiveTransactionAsync(async (tx) => {
+            await tx.execAsync(`
                 CREATE TABLE IF NOT EXISTS ${this.tableName} (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     airport_taxi_rotation_id INTEGER UNIQUE,
@@ -80,8 +78,7 @@ class UCVFormService {
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )`);
             
-            // Create Assistants table
-            await db.execAsync(`
+            await tx.execAsync(`
                 CREATE TABLE IF NOT EXISTS Assistants (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ucv_form_id INTEGER,
@@ -90,15 +87,13 @@ class UCVFormService {
                     FOREIGN KEY (ucv_form_id) REFERENCES UCV_Forms(id)
                 )`);
             
-            // Create Faults table
-            await db.execAsync(`
+            await tx.execAsync(`
                 CREATE TABLE IF NOT EXISTS Faults (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     fault_name TEXT UNIQUE
                 )`);
             
-            // Create UCV Form Faults relationship table
-            await db.execAsync(`
+            await tx.execAsync(`
                 CREATE TABLE IF NOT EXISTS UCV_Form_Faults (
                     ucv_form_id INTEGER,
                     fault_id INTEGER,
@@ -106,7 +101,12 @@ class UCVFormService {
                     FOREIGN KEY (ucv_form_id) REFERENCES UCV_Forms(id),
                     FOREIGN KEY (fault_id) REFERENCES Faults(id)
                 )`);
-                
+        });
+    }
+
+    async initDatabase(): Promise<void> {
+        try {
+            await this.ensureTablesExist();
             console.log('UCV Form tables initialized successfully');
         } catch (error) {
             console.error('Error creating database tables:', error);
@@ -116,64 +116,61 @@ class UCVFormService {
 
     async create(formData: UCVFormData): Promise<number> {
         try {
+            await this.ensureTablesExist();
             const db = await this.getDatabase();
             let result;
             
-            await db.execAsync('BEGIN TRANSACTION');
+            await db.withExclusiveTransactionAsync(async (tx) => {
+                result = await tx.runAsync(`
+                    INSERT INTO ${this.tableName} (
+                        airport_taxi_rotation_id,
+                        station,
+                        nom,
+                        prenom,
+                        role,
+                        chauffeur_nom,
+                        chauffeur_prenom,
+                        date_naissance,
+                        lieu_naissance,
+                        domicile,
+                        occupation,
+                        document_releve,
+                        carte_pro_num,
+                        autorisation_num,
+                        validite_autorisation,
+                        observation,
+                        taxi_numero,
+                        immatriculation,
+                        type_marque,
+                        couleur_vehicule
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        formData.airprt_taxi_rotation_id,
+                        formData.station,
+                        formData.nom,
+                        formData.prenom,
+                        formData.role,
+                        formData.chauffeur_nom,
+                        formData.chauffeur_prenom,
+                        formData.date_naissance,
+                        formData.lieu_naissance,
+                        formData.domicile,
+                        formData.occupation,
+                        formData.document_releve,
+                        formData.carte_pro_num,
+                        formData.autorisation_num,
+                        formData.validite_autorisation,
+                        formData.observation,
+                        formData.taxi_numero,
+                        formData.immatriculation,
+                        formData.type_marque,
+                        formData.couleur_vehicule
+                    ]
+                );
+            });
             
-            result = await db.runAsync(`
-                INSERT INTO ${this.tableName} (
-                    airport_taxi_rotation_id,
-                    station,
-                    nom,
-                    prenom,
-                    role,
-                    chauffeur_nom,
-                    chauffeur_prenom,
-                    date_naissance,
-                    lieu_naissance,
-                    domicile,
-                    occupation,
-                    document_releve,
-                    carte_pro_num,
-                    autorisation_num,
-                    validite_autorisation,
-                    observation,
-                    taxi_numero,
-                    immatriculation,
-                    type_marque,
-                    couleur_vehicule
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    formData.airprt_taxi_rotation_id,
-                    formData.station,
-                    formData.nom,
-                    formData.prenom,
-                    formData.role,
-                    formData.chauffeur_nom,
-                    formData.chauffeur_prenom,
-                    formData.date_naissance,
-                    formData.lieu_naissance,
-                    formData.domicile,
-                    formData.occupation,
-                    formData.document_releve,
-                    formData.carte_pro_num,
-                    formData.autorisation_num,
-                    formData.validite_autorisation,
-                    formData.observation,
-                    formData.taxi_numero,
-                    formData.immatriculation,
-                    formData.type_marque,
-                    formData.couleur_vehicule
-                ]
-            );
-            
-            await db.execAsync('COMMIT');
-            
-            return result.lastInsertRowId;
+            return result!.insertId;
         } catch (error) {
-            const db = await this.getDatabase();
-            await db.execAsync('ROLLBACK');
             console.error('Error creating UCV form:', error);
             throw error;
         }
@@ -181,6 +178,7 @@ class UCVFormService {
 
     async getAllForms(): Promise<UCVFormData[]> {
         try {
+            await this.ensureTablesExist();
             const db = await this.getDatabase();
             let records: UCVFormData[] = [];
             
@@ -203,6 +201,7 @@ class UCVFormService {
 
     async checkFormExists(airportTaxiRotationId: number): Promise<boolean> {
         try {
+            await this.ensureTablesExist();
             const db = await this.getDatabase();
             
             const result = await db.getFirstAsync<{ count: number }>(`
@@ -218,6 +217,7 @@ class UCVFormService {
 
     async getFormByRotationId(airportTaxiRotationId: number): Promise<UCVFormData | null> {
         try {
+            await this.ensureTablesExist();
             const db = await this.getDatabase();
             let record: UCVFormData | null = null;
             
@@ -238,6 +238,7 @@ class UCVFormService {
 
     async updateForm(id: number, formData: UCVFormData): Promise<boolean> {
         try {
+            await this.ensureTablesExist();
             const db = await this.getDatabase();
             let success = false;
             
@@ -301,22 +302,23 @@ class UCVFormService {
 
     async deleteForm(id: number): Promise<boolean> {
         try {
+            await this.ensureTablesExist();
             const db = await this.getDatabase();
             let success = false;
             
-            await db.withTransactionAsync(async () => {
+            await db.withExclusiveTransactionAsync(async (tx) => {
                 // First delete related records from assistant table
-                await db!.runAsync(`
+                await tx.runAsync(`
                     DELETE FROM Assistants WHERE ucv_form_id = ?
                 `, [id]);
                 
                 // Then delete relationship records from UCV_Form_Faults
-                await db!.runAsync(`
+                await tx.runAsync(`
                     DELETE FROM UCV_Form_Faults WHERE ucv_form_id = ?
                 `, [id]);
                 
                 // Finally delete the form itself
-                await db!.runAsync(`
+                await tx.runAsync(`
                     DELETE FROM ${this.tableName} WHERE id = ?
                 `, [id]);
                 
