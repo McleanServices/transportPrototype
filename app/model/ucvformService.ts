@@ -41,6 +41,13 @@ class UCVFormService {
     private dbName: string = 'transport.db';
     private tableName: string = 'UCV_Forms';
     private db: SQLite.SQLiteDatabase | null = null;
+    private operationQueue: Promise<void> = Promise.resolve();
+
+    private async enqueueOperation<T>(operation: () => Promise<T>): Promise<T> {
+        const result = this.operationQueue.then(operation);
+        this.operationQueue = result.then(() => {}, () => {});
+        return result;
+    }
 
     private async getDatabase(): Promise<SQLite.SQLiteDatabase> {
         if (!this.db) {
@@ -115,36 +122,167 @@ class UCVFormService {
     }
 
     async create(formData: UCVFormData): Promise<number> {
-        try {
-            await this.ensureTablesExist();
-            const db = await this.getDatabase();
-            let result;
-            
-            await db.withExclusiveTransactionAsync(async (tx) => {
-                result = await tx.runAsync(`
-                    INSERT INTO ${this.tableName} (
-                        airport_taxi_rotation_id,
-                        station,
-                        nom,
-                        prenom,
-                        role,
-                        chauffeur_nom,
-                        chauffeur_prenom,
-                        date_naissance,
-                        lieu_naissance,
-                        domicile,
-                        occupation,
-                        document_releve,
-                        carte_pro_num,
-                        autorisation_num,
-                        validite_autorisation,
-                        observation,
-                        taxi_numero,
-                        immatriculation,
-                        type_marque,
-                        couleur_vehicule
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
+        return this.enqueueOperation(async () => {
+            try {
+                await this.ensureTablesExist();
+                const db = await this.getDatabase();
+                let result;
+                
+                await db.withExclusiveTransactionAsync(async (tx) => {
+                    result = await tx.runAsync(`
+                        INSERT INTO ${this.tableName} (
+                            airport_taxi_rotation_id,
+                            station,
+                            nom,
+                            prenom,
+                            role,
+                            chauffeur_nom,
+                            chauffeur_prenom,
+                            date_naissance,
+                            lieu_naissance,
+                            domicile,
+                            occupation,
+                            document_releve,
+                            carte_pro_num,
+                            autorisation_num,
+                            validite_autorisation,
+                            observation,
+                            taxi_numero,
+                            immatriculation,
+                            type_marque,
+                            couleur_vehicule
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            formData.airprt_taxi_rotation_id,
+                            formData.station,
+                            formData.nom,
+                            formData.prenom,
+                            formData.role,
+                            formData.chauffeur_nom,
+                            formData.chauffeur_prenom,
+                            formData.date_naissance,
+                            formData.lieu_naissance,
+                            formData.domicile,
+                            formData.occupation,
+                            formData.document_releve,
+                            formData.carte_pro_num,
+                            formData.autorisation_num,
+                            formData.validite_autorisation,
+                            formData.observation,
+                            formData.taxi_numero,
+                            formData.immatriculation,
+                            formData.type_marque,
+                            formData.couleur_vehicule
+                        ]
+                    );
+                });
+                
+                return result!.insertId;
+            } catch (error) {
+                console.error('Error creating UCV form:', error);
+                throw error;
+            }
+        });
+    }
+
+    async getAllForms(): Promise<UCVFormData[]> {
+        return this.enqueueOperation(async () => {
+            try {
+                await this.ensureTablesExist();
+                const db = await this.getDatabase();
+                let records: UCVFormData[] = [];
+                
+                await db.withTransactionAsync(async () => {
+                    const result = await db!.getAllAsync<UCVFormData>(`
+                        SELECT * FROM ${this.tableName} ORDER BY created_at DESC
+                    `);
+                    
+                    if (result && Array.isArray(result)) {
+                        records = result;
+                    }
+                });
+                
+                return records;
+            } catch (error) {
+                console.error('Error fetching UCV forms:', error);
+                throw error;
+            }
+        });
+    }
+
+    async checkFormExists(airportTaxiRotationId: number): Promise<boolean> {
+        return this.enqueueOperation(async () => {
+            try {
+                await this.ensureTablesExist();
+                const db = await this.getDatabase();
+                
+                const result = await db.getFirstAsync<{ count: number }>(`
+                    SELECT COUNT(*) as count FROM ${this.tableName} WHERE airport_taxi_rotation_id = ?
+                `, [airportTaxiRotationId]);
+                
+                return (result?.count ?? 0) > 0;
+            } catch (error) {
+                console.error('Error checking if form exists:', error);
+                throw error;
+            }
+        });
+    }
+
+    async getFormByRotationId(airportTaxiRotationId: number): Promise<UCVFormData | null> {
+        return this.enqueueOperation(async () => {
+            try {
+                await this.ensureTablesExist();
+                const db = await this.getDatabase();
+                let record: UCVFormData | null = null;
+                
+                await db.withTransactionAsync(async () => {
+                    const result = await db!.getFirstAsync<UCVFormData>(`
+                        SELECT * FROM ${this.tableName} WHERE airport_taxi_rotation_id = ?
+                    `, [airportTaxiRotationId]);
+                    
+                    record = result || null;
+                });
+                
+                return record;
+            } catch (error) {
+                console.error('Error fetching UCV form by rotation ID:', error);
+                throw error;
+            }
+        });
+    }
+
+    async updateForm(id: number, formData: UCVFormData): Promise<boolean> {
+        return this.enqueueOperation(async () => {
+            try {
+                await this.ensureTablesExist();
+                const db = await this.getDatabase();
+                let success = false;
+                
+                await db.withTransactionAsync(async () => {
+                    await db!.runAsync(`
+                        UPDATE ${this.tableName} SET
+                            airport_taxi_rotation_id = ?,
+                            station = ?,
+                            nom = ?,
+                            prenom = ?,
+                            role = ?,
+                            chauffeur_nom = ?,
+                            chauffeur_prenom = ?,
+                            date_naissance = ?,
+                            lieu_naissance = ?,
+                            domicile = ?,
+                            occupation = ?,
+                            document_releve = ?,
+                            carte_pro_num = ?,
+                            autorisation_num = ?,
+                            validite_autorisation = ?,
+                            observation = ?,
+                            taxi_numero = ?,
+                            immatriculation = ?,
+                            type_marque = ?,
+                            couleur_vehicule = ?
+                        WHERE id = ?
+                    `, [
                         formData.airprt_taxi_rotation_id,
                         formData.station,
                         formData.nom,
@@ -164,172 +302,53 @@ class UCVFormService {
                         formData.taxi_numero,
                         formData.immatriculation,
                         formData.type_marque,
-                        formData.couleur_vehicule
-                    ]
-                );
-            });
-            
-            return result!.insertId;
-        } catch (error) {
-            console.error('Error creating UCV form:', error);
-            throw error;
-        }
-    }
-
-    async getAllForms(): Promise<UCVFormData[]> {
-        try {
-            await this.ensureTablesExist();
-            const db = await this.getDatabase();
-            let records: UCVFormData[] = [];
-            
-            await db.withTransactionAsync(async () => {
-                const result = await db!.getAllAsync<UCVFormData>(`
-                    SELECT * FROM ${this.tableName} ORDER BY created_at DESC
-                `);
+                        formData.couleur_vehicule,
+                        id
+                    ]);
+                    
+                    success = true;
+                });
                 
-                if (result && Array.isArray(result)) {
-                    records = result;
-                }
-            });
-            
-            return records;
-        } catch (error) {
-            console.error('Error fetching UCV forms:', error);
-            throw error;
-        }
-    }
-
-    async checkFormExists(airportTaxiRotationId: number): Promise<boolean> {
-        try {
-            await this.ensureTablesExist();
-            const db = await this.getDatabase();
-            
-            const result = await db.getFirstAsync<{ count: number }>(`
-                SELECT COUNT(*) as count FROM ${this.tableName} WHERE airport_taxi_rotation_id = ?
-            `, [airportTaxiRotationId]);
-            
-            return (result?.count ?? 0) > 0;
-        } catch (error) {
-            console.error('Error checking if form exists:', error);
-            throw error;
-        }
-    }
-
-    async getFormByRotationId(airportTaxiRotationId: number): Promise<UCVFormData | null> {
-        try {
-            await this.ensureTablesExist();
-            const db = await this.getDatabase();
-            let record: UCVFormData | null = null;
-            
-            await db.withTransactionAsync(async () => {
-                const result = await db!.getFirstAsync<UCVFormData>(`
-                    SELECT * FROM ${this.tableName} WHERE airport_taxi_rotation_id = ?
-                `, [airportTaxiRotationId]);
-                
-                record = result || null;
-            });
-            
-            return record;
-        } catch (error) {
-            console.error('Error fetching UCV form by rotation ID:', error);
-            throw error;
-        }
-    }
-
-    async updateForm(id: number, formData: UCVFormData): Promise<boolean> {
-        try {
-            await this.ensureTablesExist();
-            const db = await this.getDatabase();
-            let success = false;
-            
-            await db.withTransactionAsync(async () => {
-                await db!.runAsync(`
-                    UPDATE ${this.tableName} SET
-                        airport_taxi_rotation_id = ?,
-                        station = ?,
-                        nom = ?,
-                        prenom = ?,
-                        role = ?,
-                        chauffeur_nom = ?,
-                        chauffeur_prenom = ?,
-                        date_naissance = ?,
-                        lieu_naissance = ?,
-                        domicile = ?,
-                        occupation = ?,
-                        document_releve = ?,
-                        carte_pro_num = ?,
-                        autorisation_num = ?,
-                        validite_autorisation = ?,
-                        observation = ?,
-                        taxi_numero = ?,
-                        immatriculation = ?,
-                        type_marque = ?,
-                        couleur_vehicule = ?
-                    WHERE id = ?
-                `, [
-                    formData.airprt_taxi_rotation_id,
-                    formData.station,
-                    formData.nom,
-                    formData.prenom,
-                    formData.role,
-                    formData.chauffeur_nom,
-                    formData.chauffeur_prenom,
-                    formData.date_naissance,
-                    formData.lieu_naissance,
-                    formData.domicile,
-                    formData.occupation,
-                    formData.document_releve,
-                    formData.carte_pro_num,
-                    formData.autorisation_num,
-                    formData.validite_autorisation,
-                    formData.observation,
-                    formData.taxi_numero,
-                    formData.immatriculation,
-                    formData.type_marque,
-                    formData.couleur_vehicule,
-                    id
-                ]);
-                
-                success = true;
-            });
-            
-            return success;
-        } catch (error) {
-            console.error(`Error updating UCV form with id ${id}:`, error);
-            throw error;
-        }
+                return success;
+            } catch (error) {
+                console.error(`Error updating UCV form with id ${id}:`, error);
+                throw error;
+            }
+        });
     }
 
     async deleteForm(id: number): Promise<boolean> {
-        try {
-            await this.ensureTablesExist();
-            const db = await this.getDatabase();
-            let success = false;
-            
-            await db.withExclusiveTransactionAsync(async (tx) => {
-                // First delete related records from assistant table
-                await tx.runAsync(`
-                    DELETE FROM Assistants WHERE ucv_form_id = ?
-                `, [id]);
+        return this.enqueueOperation(async () => {
+            try {
+                await this.ensureTablesExist();
+                const db = await this.getDatabase();
+                let success = false;
                 
-                // Then delete relationship records from UCV_Form_Faults
-                await tx.runAsync(`
-                    DELETE FROM UCV_Form_Faults WHERE ucv_form_id = ?
-                `, [id]);
+                await db.withExclusiveTransactionAsync(async (tx) => {
+                    // First delete related records from assistant table
+                    await tx.runAsync(`
+                        DELETE FROM Assistants WHERE ucv_form_id = ?
+                    `, [id]);
+                    
+                    // Then delete relationship records from UCV_Form_Faults
+                    await tx.runAsync(`
+                        DELETE FROM UCV_Form_Faults WHERE ucv_form_id = ?
+                    `, [id]);
+                    
+                    // Finally delete the form itself
+                    await tx.runAsync(`
+                        DELETE FROM ${this.tableName} WHERE id = ?
+                    `, [id]);
+                    
+                    success = true;
+                });
                 
-                // Finally delete the form itself
-                await tx.runAsync(`
-                    DELETE FROM ${this.tableName} WHERE id = ?
-                `, [id]);
-                
-                success = true;
-            });
-            
-            return success;
-        } catch (error) {
-            console.error(`Error deleting UCV form with id ${id}:`, error);
-            throw error;
-        }
+                return success;
+            } catch (error) {
+                console.error(`Error deleting UCV form with id ${id}:`, error);
+                throw error;
+            }
+        });
     }
 }
 
