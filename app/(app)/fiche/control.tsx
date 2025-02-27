@@ -23,16 +23,20 @@ import { useStorageState } from "../../../context/useStorageState";
 import { useLocalSearchParams } from "expo-router";
 import ucvFormService, { UCVFormData } from "../../model/ucvformService";
 import { SQLiteProvider } from "expo-sqlite";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const Control = () => {
+export default function Control() {
   
   const asset = Asset.fromModule(require("../../../assets/images/logo.png"));
 
   const { airport_taxi_rotation_id } = useLocalSearchParams();
+  const { type} = useLocalSearchParams();
   console.log(
     "Local Search Params ID Control ID is:",
-    airport_taxi_rotation_id
+    airport_taxi_rotation_id,
+    "Type is:",
+    type
   );
 
   const scrollViewRef = useRef<ScrollView | null>(null);
@@ -97,22 +101,27 @@ const Control = () => {
 
   useEffect(() => {
     const checkExistingForm = async () => {
-      if (!airport_taxi_rotation_id) return;
+      if (!airport_taxi_rotation_id && !type) return;
 
       try {
-        console.log(
-          "Checking if form exists for rotation ID:",
-          airport_taxi_rotation_id
-        );
-        const exists = await ucvFormService.checkFormExists(
-          Number(airport_taxi_rotation_id)
-        );
+        const storedRotationId = await AsyncStorage.getItem('airport_taxi_rotation_id');
+        const storedType = await AsyncStorage.getItem('type');
+
+        if (storedRotationId === String(airport_taxi_rotation_id) && storedType === String(type)) {
+          await AsyncStorage.clear();
+          setFormExists(false);
+          return;
+        }
+
+        await AsyncStorage.setItem('airport_taxi_rotation_id', String(airport_taxi_rotation_id));
+        await AsyncStorage.setItem('type', String(type));
+
+        console.log("Checking if form exists for rotation ID:", airport_taxi_rotation_id);
+        const exists = await ucvFormService.checkFormExists(Number(airport_taxi_rotation_id), String(type));
         setFormExists(exists);
 
         if (exists) {
-          const formData = await ucvFormService.getFormByRotationId(
-            Number(airport_taxi_rotation_id)
-          );
+          const formData = await ucvFormService.getFormByRotationId(Number(airport_taxi_rotation_id));
           if (formData) {
             setStation(formData.station || "");
             setChauffeurNom(formData.chauffeur_nom || "");
@@ -131,9 +140,7 @@ const Control = () => {
             setTypeMarque(formData.type_marque || "");
             setCouleurVehicule(formData.couleur_vehicule || "");
           }
-          alert(
-            "Form data loaded for this rotation ID. Form is in read-only mode."
-          );
+          alert("Form data loaded for this rotation ID. Form is in read-only mode.");
         }
       } catch (error) {
         console.error("Error checking existing form:", error);
@@ -141,7 +148,7 @@ const Control = () => {
     };
 
     checkExistingForm();
-  }, [airport_taxi_rotation_id]);
+  }, [airport_taxi_rotation_id, type]);
 
   const stations = ["Marigot", "Grand Case"];
   const occupations = ["Taxi Driver", "Transport Operator"];
@@ -344,6 +351,7 @@ const Control = () => {
     try {
       const formData: UCVFormData = {
         airprt_taxi_rotation_id: Number(airport_taxi_rotation_id),
+        type: String(type),
         station: station,
         nom: storedNom?.[1] || "",
         prenom: storedPrenom?.[1] || "",
@@ -676,7 +684,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Control;
 
 //TODO: Add missing input for personne informe de l'incident(update sql services too)
 //TODO: Add missing codes cival to the pdf

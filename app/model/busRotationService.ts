@@ -51,8 +51,32 @@ class BusRotationService {
     }
   }
 
+  private async ensureTableExists(): Promise<void> {
+    if (!this.db) {
+      this.db = await SQLite.openDatabaseAsync(this.dbName);
+    }
+    await this.db.withTransactionAsync(async () => {
+      await this.db!.execAsync(`
+        CREATE TABLE IF NOT EXISTS ${this.tableName} (
+          bus_rotation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          numero_exploitants TEXT NOT NULL,
+          order_number INTEGER NOT NULL,
+          bus_type_id INTEGER NOT NULL,
+          date DATE NOT NULL,
+          arrival_time TEXT NOT NULL,
+          departure_time TEXT,
+          passenger_count INTEGER NOT NULL,
+          observations TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (bus_type_id) REFERENCES bus_type(bus_type_id)
+        );
+      `);
+    });
+  }
+
   async getAllBusRotations(): Promise<BusRotationData[]> {
     try {
+      await this.ensureTableExists();
       if (!this.db) {
         this.db = await SQLite.openDatabaseAsync(this.dbName);
       }
@@ -78,6 +102,7 @@ class BusRotationService {
 
   async getBusRotationById(bus_rotation_id: number): Promise<BusRotationData | null> {
     try {
+      await this.ensureTableExists();
       if (!this.db) {
         this.db = await SQLite.openDatabaseAsync(this.dbName);
       }
@@ -103,6 +128,7 @@ class BusRotationService {
 
   async createBusRotation(data: BusRotationData): Promise<number> {
     try {
+      await this.ensureTableExists();
       if (!this.db) {
         this.db = await SQLite.openDatabaseAsync(this.dbName);
       }
@@ -143,6 +169,7 @@ class BusRotationService {
 
   async updateBusRotation(bus_rotation_id: number, data: BusRotationData): Promise<boolean> {
     try {
+      await this.ensureTableExists();
       if (!this.db) {
         this.db = await SQLite.openDatabaseAsync(this.dbName);
       }
@@ -184,6 +211,7 @@ class BusRotationService {
 
   async deleteBusRotation(bus_rotation_id: number): Promise<boolean> {
     try {
+      await this.ensureTableExists();
       if (!this.db) {
         this.db = await SQLite.openDatabaseAsync(this.dbName);
       }

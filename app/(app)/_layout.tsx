@@ -86,7 +86,48 @@ export default function Layout() {
             title: 'overview',
           }}
         />
-        
+        <Drawer.Screen
+          name="parametres" 
+          options={{
+            drawerItemStyle: { display: 'none' },
+            drawerLabel: 'fiche',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+                
+              />
+            ),
+            title: 'overview',
+          }}
+        />
+        <Drawer.Screen
+          name="busRotationFiche" 
+          options={{
+            drawerItemStyle: { display: 'none' },
+            drawerLabel: 'fiche',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+                
+              />
+            ),
+            title: 'overview',
+          }}
+        />
+        <Drawer.Screen
+          name="sqlQueryScreen"
+          options={{
+            drawerLabel: 'SQL Query',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+              />
+            ),
+          }}
+        />
       </Drawer>
     </GestureHandlerRootView>
   );

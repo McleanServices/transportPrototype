@@ -51,3 +51,11 @@ export const deleteBusRotation = async (bus_rotation_id: number): Promise<boolea
     throw error;
   }
 };
+
+export default {
+  fetchAllBusRotations,
+  fetchBusRotationById,
+  createBusRotation,
+  updateBusRotation,
+  deleteBusRotation
+};

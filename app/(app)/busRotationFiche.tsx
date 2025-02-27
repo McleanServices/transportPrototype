@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, FlatList, Platform, Pressable } from 'react-native';
+import { Text, View, TouchableOpacity, StyleSheet, FlatList, Pressable } from 'react-native';
 import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useRouter } from 'expo-router';
@@ -80,11 +80,12 @@ export default function BusRotationFiche() {
 
   const handlePoliceControlAction = () => {
     if (selectedRow !== null) {
+      const additionalVariable = "bus"; 
       const airport_taxi_rotation_id = data[selectedRow].bus_rotation_id;
       if (airport_taxi_rotation_id !== undefined) {
         // Navigate to the police control screen with the bus_rotation_id
         console.log('id is',airport_taxi_rotation_id);
-        router.push(`/fiche/control?airport_taxi_rotation_id=${airport_taxi_rotation_id}`);
+        router.push(`/fiche/control?airport_taxi_rotation_id=${airport_taxi_rotation_id}&type=${additionalVariable}`);
       } else {
         alert("Please select a bus rotation first");
       }
@@ -151,7 +152,7 @@ export default function BusRotationFiche() {
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>
             <Text style={styles.blueText}>GARE ROUTIERE GUMBS ANTOINE JULIEN</Text>{' '}
-            <Text style={styles.redText}>ROTATIONS JOURNALIERES EXPLOITANTS BUS TCP/TCI/ZH</Text>
+            <Text style={styles.redText}>ROTATIONS JOURNALIERES EXPLOITANTS BUS TCP/TCI/Z</Text>
           </Text>
         </View>
 

@@ -3,6 +3,7 @@ import * as SQLite from 'expo-sqlite';
 export interface UCVFormData {
     id?: number;
     airprt_taxi_rotation_id: number;
+    type: string;
     station: string;
     nom: string;
     prenom: string;
@@ -39,7 +40,7 @@ export interface Fault {
 
 class UCVFormService {
     private dbName: string = 'transport.db';
-    private tableName: string = 'UCV_Forms';
+    private tableName: string = 'UCVtables';
     private db: SQLite.SQLiteDatabase | null = null;
     private operationQueue: Promise<void> = Promise.resolve();
 
@@ -61,8 +62,9 @@ class UCVFormService {
         await db.withExclusiveTransactionAsync(async (tx) => {
             await tx.execAsync(`
                 CREATE TABLE IF NOT EXISTS ${this.tableName} (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                    airport_taxi_rotation_id INTEGER UNIQUE,
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    type TEXT, 
+                    airport_taxi_rotation_id INTEGER,
                     station TEXT,
                     nom TEXT,
                     prenom TEXT,
@@ -82,7 +84,7 @@ class UCVFormService {
                     immatriculation TEXT,
                     type_marque TEXT,
                     couleur_vehicule TEXT,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP 
                 )`);
             
             await tx.execAsync(`
@@ -132,6 +134,7 @@ class UCVFormService {
                     result = await tx.runAsync(`
                         INSERT INTO ${this.tableName} (
                             airport_taxi_rotation_id,
+                            type,
                             station,
                             nom,
                             prenom,
@@ -151,9 +154,10 @@ class UCVFormService {
                             immatriculation,
                             type_marque,
                             couleur_vehicule
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             formData.airprt_taxi_rotation_id,
+                            formData.type,
                             formData.station,
                             formData.nom,
                             formData.prenom,
@@ -210,17 +214,24 @@ class UCVFormService {
         });
     }
 
-    async checkFormExists(airportTaxiRotationId: number): Promise<boolean> {
+    async checkFormExists(airportTaxiRotationId: number, type: string): Promise<boolean> {
         return this.enqueueOperation(async () => {
             try {
                 await this.ensureTablesExist();
                 const db = await this.getDatabase();
                 
-                const result = await db.getFirstAsync<{ count: number }>(`
-                    SELECT COUNT(*) as count FROM ${this.tableName} WHERE airport_taxi_rotation_id = ?
-                `, [airportTaxiRotationId]);
+                const dateNow = new Date().toISOString().split('T')[0];
+                let exists = false;
                 
-                return (result?.count ?? 0) > 0;
+                await db.withTransactionAsync(async () => {
+                    const result = await db!.getFirstAsync<{ count: number }>(`
+                        SELECT COUNT(*) as count FROM ${this.tableName} WHERE airport_taxi_rotation_id = ? AND type = ? AND date(created_at) = ?
+                    `, [airportTaxiRotationId, type, dateNow]);
+                    console.log('result:', result);
+                    exists = (result?.count ?? 0) > 0;
+                });
+                
+                return exists;
             } catch (error) {
                 console.error('Error checking if form exists:', error);
                 throw error;
