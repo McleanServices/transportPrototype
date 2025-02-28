@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
 import ModalForm from '../components/modals/modal';
-import EditModal from '../components/modals/editModal';
+import EditModal from './editModal';
 import ViewModal from './viewModal';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useTransportData } from './useTransportData';

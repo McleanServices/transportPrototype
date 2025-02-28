@@ -128,6 +128,28 @@ export default function Layout() {
             ),
           }}
         />
+        <Drawer.Screen
+          name="airportTaxiRotationFiche"
+          options={{
+            drawerLabel: 'Airport Rotation Fiche',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+              />
+            ),
+            headerRight: () => (
+              <Pressable onPress={() => router.push('/parametres')}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
+                  <Ionicons name="person-circle" size={24} color="black" />
+                  <Text style={{ marginLeft: 5 }}>
+                    {storedEmail ? storedEmail : ''}
+                  </Text>
+                </View>
+              </Pressable>
+            ),
+          }}
+        />
       </Drawer>
     </GestureHandlerRootView>
   );

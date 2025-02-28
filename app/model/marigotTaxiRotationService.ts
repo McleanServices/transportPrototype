@@ -1,22 +1,21 @@
 import * as SQLite from "expo-sqlite";
 
-export interface AirportTaxiRotationData {
-  airport_taxi_id?: number;
-  numero_exploitants: string;
+export interface MarigotTaxiRotationData {
+  marigot_taxi_id?: number;
   order_number: number;
   taxi_id: number;
-  airline_id: number;
+  boat_name: string | null;
+  other_transport: string | null;
   destination: string;
   passenger_count: number;
   observations: string | null;
   date: string;
   created_at?: string;
-  airline_name?: string;
 }
 
-class AirportTaxiRotationService {
+class MarigotTaxiRotationService {
   private dbName: string = "transport.db";
-  private tableName: string = "airport_taxi_rotations";
+  private tableName: string = "marigot_taxi_rotations";
   private db: SQLite.SQLiteDatabase | null = null;
   private operationQueue: Promise<void> = Promise.resolve();
 
@@ -41,127 +40,94 @@ class AirportTaxiRotationService {
     await db.withExclusiveTransactionAsync(async (tx) => {
       await tx.execAsync(`
         CREATE TABLE IF NOT EXISTS ${this.tableName} (
-          airport_taxi_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          numero_exploitants TEXT NOT NULL,
+          marigot_taxi_id INTEGER PRIMARY KEY AUTOINCREMENT,
           order_number INTEGER NOT NULL,
           taxi_id INTEGER NOT NULL,
-          airline_id INTEGER,
+          boat_name TEXT,
+          other_transport TEXT,
           destination TEXT NOT NULL,
           passenger_count INTEGER NOT NULL,
           observations TEXT,
           date DATE NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (taxi_id) REFERENCES taxi(taxi_id),
-          FOREIGN KEY (airline_id) REFERENCES airline_company(airline_id)
+          FOREIGN KEY (taxi_id) REFERENCES taxi(taxi_id)
         );
       `);
-      await tx.execAsync(`
-        CREATE TABLE IF NOT EXISTS taxi (
-          taxi_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          taxi_number TEXT NOT NULL UNIQUE,
-          taxi_type TEXT CHECK(taxi_type IN ('Airport', 'Marigot')) NOT NULL
-        );
-      `);
-      await tx.execAsync(`
-        CREATE TABLE IF NOT EXISTS airline_company (
-          airline_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          airline_name TEXT NOT NULL UNIQUE
-        );
-      `);
-
-      // Insert default airline companies
-      const airlineCompanies = [
-        "-",
-        "Air Antilles",
-        "Air Caraïbes",
-        "Air France",
-        "American Airlines",
-      ];
-      for (const airline of airlineCompanies) {
-        await tx.runAsync(
-          "INSERT OR IGNORE INTO airline_company (airline_name) VALUES (?)",
-          [airline]
-        );
-      }
     });
   }
 
   async initDatabase(): Promise<void> {
     try {
       await this.ensureTablesExist();
-      console.log("Airport taxi rotation tables initialized successfully");
+      console.log("Marigot taxi rotation tables initialized successfully");
     } catch (error) {
-      console.error("Error initializing airport taxi rotation tables:", error);
+      console.error("Error initializing marigot taxi rotation tables:", error);
       throw error;
     }
   }
 
-  async getAllAirportTaxiRotations(): Promise<AirportTaxiRotationData[]> {
+  async getAllMarigotTaxiRotations(): Promise<MarigotTaxiRotationData[]> {
     return this.enqueueOperation(async () => {
       try {
         await this.ensureTablesExist();
         const db = await this.getDatabase();
-        let records: AirportTaxiRotationData[] = [];
+        let records: MarigotTaxiRotationData[] = [];
 
         await db.withTransactionAsync(async () => {
           const result = await db.getAllAsync(`
-            SELECT atr.*, ac.airline_name 
-            FROM ${this.tableName} atr
-            JOIN airline_company ac ON atr.airline_id = ac.airline_id
-            ORDER BY atr.created_at DESC
+            SELECT * FROM ${this.tableName}
+            ORDER BY created_at DESC
           `);
 
           if (result && Array.isArray(result)) {
-            records = result as AirportTaxiRotationData[];
+            records = result as MarigotTaxiRotationData[];
           }
         });
 
         return records;
       } catch (error) {
-        console.error("Error getting airport taxi rotations:", error);
+        console.error("Error getting marigot taxi rotations:", error);
         throw error;
       }
     });
   }
 
-  async getAirportTaxiRotationById(
-    airport_taxi_id: number
-  ): Promise<AirportTaxiRotationData | null> {
+  async getMarigotTaxiRotationById(
+    marigot_taxi_id: number
+  ): Promise<MarigotTaxiRotationData | null> {
     try {
       await this.ensureTablesExist();
       if (!this.db) {
         this.db = await SQLite.openDatabaseAsync(this.dbName);
       }
-      let record: AirportTaxiRotationData | null = null;
+      let record: MarigotTaxiRotationData | null = null;
 
       await this.db.withTransactionAsync(async () => {
         const result = await this.db!.getAllAsync(
           `
-            SELECT atr.*, ac.airline_name 
-            FROM ${this.tableName} atr
-            JOIN airline_company ac ON atr.airline_id = ac.airline_id
-            WHERE airport_taxi_id = ?
+            SELECT * FROM ${this.tableName}
+            WHERE marigot_taxi_id = ?
           `,
-          [airport_taxi_id]
+          [marigot_taxi_id]
         );
 
         if (result && Array.isArray(result) && result.length > 0) {
-          record = result[0] as AirportTaxiRotationData;
+          record = result[0] as MarigotTaxiRotationData;
         }
       });
 
       return record;
     } catch (error) {
       console.error(
-        `Error getting airport taxi rotation with id ${airport_taxi_id}:`,
+        `Error getting marigot taxi rotation with id ${marigot_taxi_id}:`,
         error
       );
       throw error;
     }
   }
 
-  async createAirportTaxiRotation(
-    data: AirportTaxiRotationData
+  async createMarigotTaxiRotation(
+    data: MarigotTaxiRotationData
   ): Promise<number> {
     try {
       await this.ensureTablesExist();
@@ -174,10 +140,10 @@ class AirportTaxiRotationService {
         const result = await this.db!.runAsync(
           `
             INSERT INTO ${this.tableName} (
-              numero_exploitants,
               order_number,
               taxi_id,
-              airline_id,
+              boat_name,
+              other_transport,
               destination,
               passenger_count,
               observations,
@@ -185,10 +151,10 @@ class AirportTaxiRotationService {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
           `,
           [
-            data.numero_exploitants,
             data.order_number,
             data.taxi_id,
-            data.airline_id,
+            data.boat_name ?? null,
+            data.other_transport ?? null,
             data.destination,
             data.passenger_count,
             data.observations ?? null,
@@ -201,14 +167,14 @@ class AirportTaxiRotationService {
 
       return newId;
     } catch (error) {
-      console.error("Error creating airport taxi rotation:", error);
+      console.error("Error creating marigot taxi rotation:", error);
       throw error;
     }
   }
 
-  async updateAirportTaxiRotation(
-    airport_taxi_id: number,
-    data: AirportTaxiRotationData
+  async updateMarigotTaxiRotation(
+    marigot_taxi_id: number,
+    data: MarigotTaxiRotationData
   ): Promise<boolean> {
     return this.enqueueOperation(async () => {
       try {
@@ -220,26 +186,26 @@ class AirportTaxiRotationService {
           await db.runAsync(
             `
             UPDATE ${this.tableName} SET
-              numero_exploitants = ?,
               order_number = ?,
               taxi_id = ?,
-              airline_id = ?,
+              boat_name = ?,
+              other_transport = ?,
               destination = ?,
               passenger_count = ?,
               observations = ?,
               date = ?
-            WHERE airport_taxi_id = ?
+            WHERE marigot_taxi_id = ?
           `,
             [
-              data.numero_exploitants,
               data.order_number,
               data.taxi_id,
-              data.airline_id,
+              data.boat_name ?? null,
+              data.other_transport ?? null,
               data.destination,
               data.passenger_count,
               data.observations ?? null,
               data.date,
-              airport_taxi_id,
+              marigot_taxi_id,
             ]
           );
 
@@ -249,7 +215,7 @@ class AirportTaxiRotationService {
         return success;
       } catch (error) {
         console.error(
-          `Error updating airport taxi rotation with id ${airport_taxi_id}:`,
+          `Error updating marigot taxi rotation with id ${marigot_taxi_id}:`,
           error
         );
         throw error;
@@ -257,7 +223,7 @@ class AirportTaxiRotationService {
     });
   }
 
-  async deleteAirportTaxiRotation(airport_taxi_id: number): Promise<boolean> {
+  async deleteMarigotTaxiRotation(marigot_taxi_id: number): Promise<boolean> {
     return this.enqueueOperation(async () => {
       try {
         await this.ensureTablesExist();
@@ -267,9 +233,9 @@ class AirportTaxiRotationService {
         await db.withTransactionAsync(async () => {
           await db.runAsync(
             `
-            DELETE FROM ${this.tableName} WHERE airport_taxi_id = ?
+            DELETE FROM ${this.tableName} WHERE marigot_taxi_id = ?
           `,
-            [airport_taxi_id]
+            [marigot_taxi_id]
           );
 
           success = true;
@@ -278,7 +244,7 @@ class AirportTaxiRotationService {
         return success;
       } catch (error) {
         console.error(
-          `Error deleting airport taxi rotation with id ${airport_taxi_id}:`,
+          `Error deleting marigot taxi rotation with id ${marigot_taxi_id}:`,
           error
         );
         throw error;
@@ -315,5 +281,5 @@ class AirportTaxiRotationService {
   }
 }
 
-const airportTaxiRotationService = new AirportTaxiRotationService();
-export default airportTaxiRotationService;
+const marigotTaxiRotationService = new MarigotTaxiRotationService();
+export default marigotTaxiRotationService;

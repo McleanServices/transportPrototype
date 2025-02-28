@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, Button, StyleSheet, TextInput } from 'react-native';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
 
 
 interface AirportTaxiRotationModalProps {
@@ -21,24 +21,14 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [errors, setErrors] = useState({
     exploitants: '',
-    destination: '',
-    date: '',
   });
 
   const validateForm = () => {
     let valid = true;
-    let newErrors = { exploitants: '', destination: '', date: '' };
+    let newErrors = { exploitants: ''};
 
     if (!formData.exploitants) {
       newErrors.exploitants = 'Exploitants is required';
-      valid = false;
-    }
-    if (!formData.destination) {
-      newErrors.destination = 'Destination is required';
-      valid = false;
-    }
-    if (!formData.date) {
-      newErrors.date = 'Date is required';
       valid = false;
     }
 
@@ -60,11 +50,10 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
         order_number: 1, // Default value, update as needed
         taxi_id: 1, // Default value, update as needed
         airline_id: 1, // Default value, update as needed
-        destination: formData.destination,
+        destination: '-',
         passenger_count: formData.passengerCount,
         observations: formData.observations ?? null,
         date: formData.date.toISOString().split('T')[0], // Current date
-        airline_name: '1',
       };
 
       await onFormSubmit(dataToSubmit);
@@ -89,7 +78,7 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
   };
 
   const isFormValid = () => {
-    return formData.exploitants && formData.destination && formData.date;
+    return formData.exploitants ;
   };
 
   return (
@@ -112,33 +101,6 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
                   onChangeText={(text) => handleInputChange('exploitants', text)}
                 />
                 {errors.exploitants ? <Text style={styles.errorText}>{errors.exploitants}</Text> : null}
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>DESTINATION</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.destination}
-                  onChangeText={(text) => handleInputChange('destination', text)}
-                />
-                {errors.destination ? <Text style={styles.errorText}>{errors.destination}</Text> : null}
-              </View>
-            </View>
-            <View style={styles.inputRow}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>DATE</Text>
-                <TouchableOpacity
-                  style={styles.input}
-                  onPress={showDatePicker}
-                >
-                  <Text>{formData.date.toLocaleDateString()}</Text>
-                </TouchableOpacity>
-                <DateTimePickerModal
-                  isVisible={isDatePickerVisible}
-                  mode="date"
-                  onConfirm={handleDateConfirm}
-                  onCancel={hideDatePicker}
-                />
-                {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
               </View>
             </View>
             <Button title="Submit" onPress={handleSubmit} disabled={!isFormValid()} />

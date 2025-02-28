@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import airportTaxiRotationService from '../../app/model/airportTaxiRotationService';
+import marigotTaxiRotationService from '../../../app/model/marigotTaxiRotationService';
 
-interface EditAirportTaxiRotationModalProps {
+interface EditMarigotTaxiRotationModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
   formData: any;
   onFormSubmit: (formData: any) => void;
 }
 
-const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
+const EditMarigotTaxiRotationModal: React.FC<EditMarigotTaxiRotationModalProps> = ({ modalVisible, setModalVisible, formData, onFormSubmit }) => {
   const [editData, setEditData] = useState(formData);
 
   useEffect(() => {
     const preloadData = async () => {
-      if (formData.airport_taxi_id) {
-        const data = await airportTaxiRotationService.getAirportTaxiRotationById(formData.airport_taxi_id);
+      if (formData.marigot_taxi_id) {
+        const data = await marigotTaxiRotationService.getMarigotTaxiRotationById(formData.marigot_taxi_id);
         if (data) {
           setEditData({
             ...formData,
-            exploitants: data.numero_exploitants,
+            taxi_id: data.taxi_id,
+            boat_name: data.boat_name,
+            other_transport: data.other_transport,
             destination: data.destination,
-            passengerCount: data.passenger_count,
+            passenger_count: data.passenger_count,
             observations: data.observations,
-            date: new Date(data.date),
-            airline_name: '1'
+            date: new Date(data.date)
           });
         }
       }
@@ -42,25 +43,24 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
 
   const handleSubmit = async () => {
     try {
-      const { airport_taxi_id } = editData;
-      if (!airport_taxi_id) {
+      const { marigot_taxi_id } = editData;
+      if (!marigot_taxi_id) {
         console.error('No ID provided for update');
         return;
       }
 
       const dataToUpdate = {
-        numero_exploitants: editData.exploitants,
-        order_number: formData.order_number,
-        taxi_id: formData.taxi_id,
-        airline_id: formData.airline_id,
+        order_number: editData.order_number,
+        taxi_id: editData.taxi_id,
+        boat_name: editData.boat_name,
+        other_transport: editData.other_transport,
         destination: editData.destination,
-        passenger_count: editData.passengerCount,
+        passenger_count: editData.passenger_count,
         observations: editData.observations,
-        date: new Date(editData.date).toISOString().split('T')[0],
-        airline_name: '1'
+        date: new Date(editData.date).toISOString().split('T')[0]
       };
 
-      const success = await airportTaxiRotationService.updateAirportTaxiRotation(airport_taxi_id, dataToUpdate);
+      const success = await marigotTaxiRotationService.updateMarigotTaxiRotation(marigot_taxi_id, dataToUpdate);
       
       if (success) {
         console.log('Data updated successfully');
@@ -102,19 +102,19 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
               <Text style={styles.modalText}></Text>
               <View style={styles.inputRow}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>N EXPLOITANTS</Text>
+                  <Text style={styles.label}>N° TAXI</Text>
                   <TextInput
                     style={styles.input}
-                    value={editData.exploitants}
-                    onChangeText={(text) => handleInputChange('exploitants', text)}
+                    value={editData.taxi_id}
+                    onChangeText={(text) => handleInputChange('taxi_id', text)}
                   />
                 </View>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>DESTINATION</Text>
+                  <Text style={styles.label}>BATEAU</Text>
                   <TextInput
                     style={styles.input}
-                    value={editData.destination}
-                    onChangeText={(text) => handleInputChange('destination', text)}
+                    value={editData.boat_name}
+                    onChangeText={(text) => handleInputChange('boat_name', text)}
                   />
                 </View>
               </View>
@@ -135,19 +135,19 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
                   />
                 </View>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>N PASSAGERS</Text>
+                  <Text style={styles.label}>N° PASSAGERS</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="N PASSAGERS"
-                    value={editData.passengerCount}
-                    onChangeText={(value) => handleInputChange('passengerCount', value)}
+                    placeholder="N° PASSAGERS"
+                    value={editData.passenger_count}
+                    onChangeText={(value) => handleInputChange('passenger_count', value)}
                   />
                 </View>
               </View>
-              <Text style={[styles.label, { marginTop: 15 }]}>OBSERVATIONS/REMARQUES</Text>
+              <Text style={[styles.label, { marginTop: 15 }]}>OBSERVATIONS</Text>
               <TextInput
                 style={styles.input}
-                placeholder="OBSERVATIONS/REMARQUES"
+                placeholder="OBSERVATIONS"
                 value={editData.observations}
                 onChangeText={(value) => handleInputChange('observations', value)}
               />
@@ -239,4 +239,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditAirportTaxiRotationModal;
+export default EditMarigotTaxiRotationModal;

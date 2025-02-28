@@ -4,8 +4,8 @@ import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useRouter } from 'expo-router';
 
-import BusRotationModal from '../../components/modals/busRotationModal';
-import EditBusRotationModal from '../../components/modals/editBusRotationModal';
+import BusRotationModal from '../../components/modals/create/busRotationModal';
+import EditBusRotationModal from '../../components/modals/update/editBusRotationModal';
 import ViewModal from '../../components/modals/viewModal';
 
 import {
@@ -24,6 +24,8 @@ export default function BusRotationFiche() {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
+  const todayDate = new Date().toLocaleDateString('fr-FR');
 
   const fetchData = async () => {
     try {
@@ -152,7 +154,8 @@ export default function BusRotationFiche() {
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>
             <Text style={styles.blueText}>GARE ROUTIERE GUMBS ANTOINE JULIEN</Text>{' '}
-            <Text style={styles.redText}>ROTATIONS JOURNALIERES EXPLOITANTS BUS TCP/TCI/Z</Text>
+            <Text style={styles.redText}>ROTATIONS JOURNALIERES EXPLOITANTS BUS TCP/TCI/Z</Text>{' '}
+            <Text style={styles.blueText}>{todayDate}</Text>
           </Text>
         </View>
 
@@ -194,10 +197,8 @@ export default function BusRotationFiche() {
               >
                 <AntDesign name="delete" size={22} color="white" />
               </TouchableOpacity>
-            </>
-          )}
 
-          <TouchableOpacity 
+              <TouchableOpacity 
             style={styles.policeControlButton} 
             onPress={handlePoliceControlAction}
             activeOpacity={0.7}
@@ -205,6 +206,10 @@ export default function BusRotationFiche() {
             <FontAwesome name="shield" size={22} color="white" />
           </TouchableOpacity>
 
+            </>
+          )}
+
+         
           <TouchableOpacity 
             style={styles.fab} 
             onPress={() => setModalVisible(true)}

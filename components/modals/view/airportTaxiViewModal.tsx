@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, Button, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import airportTaxiRotationService from '../../app/model/airportTaxiRotationService';
+import airportTaxiRotationService from '../../../app/model/airportTaxiRotationService';
 
 interface AirportTaxiViewModalProps {
   modalVisible: boolean;
@@ -30,7 +30,10 @@ const AirportTaxiViewModal: React.FC<AirportTaxiViewModalProps> = ({ modalVisibl
         try {
           const record = await airportTaxiRotationService.getAirportTaxiRotationById(airport_taxi_id);
           if (record) {
-            setEditData(record);
+            setEditData({
+              ...record,
+              airline_name: record.airline_name || '',
+            });
           }
         } catch (error) {
           console.error('Error fetching record:', error);
