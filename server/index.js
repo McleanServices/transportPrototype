@@ -9,7 +9,7 @@ const sqlConfig = {
     user: 'SA',
     password: 'Str0ngNewP@ssword!',
     database: 'Transportbdd',
-    server: '145.223.73.21', // replace with your server's hostname
+    server: '145.223.73.21', 
     pool: {
         max: 10,
         min: 0,
@@ -32,89 +32,70 @@ sql.connect(sqlConfig).then(pool => {
 
 app.use(express.json());
 
-// Create table if it doesn't exist
-sql.connect(sqlConfig).then(pool => {
-    if (pool.connected) {
+// Create table if it doesn't exist and sync data from SQLite
+app.post('/sync-database', async (req, res) => {
+    try {
+        const pool = await sql.connect(sqlConfig);
         const createTableQuery = `
-            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Transport_rotation_fiche')
-            BEGIN
-                CREATE TABLE Transport_rotation_fiche (
-                    id INT IDENTITY(1,1) PRIMARY KEY,
-                    exploitants NVARCHAR(MAX),
-                    arrivalTime NVARCHAR(50),
-                    departureTime NVARCHAR(50),
-                    passengers NVARCHAR(MAX),
-                    observations NVARCHAR(MAX)
-                );
-            END;
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='bus_rotation' AND xtype='U')
+            CREATE TABLE bus_rotation (
+                bus_rotation_id INT PRIMARY KEY IDENTITY,
+                exploitants NVARCHAR(255),
+                date DATE,
+                arrival_time TIME,
+                departure_time TIME,
+                passenger_count INT,
+                observations NVARCHAR(255),
+                duration_seconds AS DATEDIFF(SECOND, arrival_time, departure_time) PERSISTED,
+                created_at DATETIME DEFAULT GETDATE()
+            );
         `;
-        pool.request().query(createTableQuery).then(() => {
-            console.log('Table Transport_rotation_fiche is ready');
-        }).catch(err => {
-            console.error('Error creating table', err);
-        });
-    }
-}).catch(err => {
-    console.error('SQL Server connection error', err);
-});
+        await pool.request().query(createTableQuery);
 
-// API endpoints for Transport_rotation_fiche
-app.get('/api/transport_rotation_fiche', async (req, res) => {
-    try {
-        const pool = await sql.connect(sqlConfig);
-        const result = await pool.request().query('SELECT * FROM Transport_rotation_fiche');
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-});
+        const data = req.body;
+        for (const record of data) {
+            const upsertQuery = `
+                MERGE bus_rotation AS target
+                USING (SELECT 
+                    @bus_rotation_id AS bus_rotation_id,
+                    @exploitants AS exploitants,
+                    @date AS date,
+                    @arrival_time AS arrival_time,
+                    @departure_time AS departure_time,
+                    @passenger_count AS passenger_count,
+                    @observations AS observations,
+                    @created_at AS created_at
+                ) AS source
+                ON target.bus_rotation_id = source.bus_rotation_id
+                WHEN MATCHED THEN 
+                    UPDATE SET 
+                        exploitants = source.exploitants,
+                        date = source.date,
+                        arrival_time = source.arrival_time,
+                        departure_time = source.departure_time,
+                        passenger_count = source.passenger_count,
+                        observations = source.observations,
+                        created_at = source.created_at
+                WHEN NOT MATCHED THEN
+                    INSERT (exploitants, date, arrival_time, departure_time, passenger_count, observations, created_at)
+                    VALUES (source.exploitants, source.date, source.arrival_time, source.departure_time, source.passenger_count, source.observations, source.created_at);
+            `;
+            await pool.request()
+                .input('bus_rotation_id', sql.Int, record.bus_rotation_id)
+                .input('exploitants', sql.NVarChar, record.exploitants)
+                .input('date', sql.Date, record.date)
+                .input('arrival_time', sql.NVarChar, record.arrival_time)
+                .input('departure_time', sql.NVarChar, record.departure_time)
+                .input('passenger_count', sql.Int, record.passenger_count)
+                .input('observations', sql.NVarChar, record.observations)
+                .input('created_at', sql.DateTime, record.created_at)
+                .query(upsertQuery);
+        }
 
-app.post('/api/transport_rotation_fiche', async (req, res) => {
-    try {
-        const { exploitants, arrivalTime, departureTime, passengers, observations } = req.body;
-        const pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-            .input('exploitants', sql.NVarChar, exploitants)
-            .input('arrivalTime', sql.NVarChar, arrivalTime)
-            .input('departureTime', sql.NVarChar, departureTime)
-            .input('passengers', sql.NVarChar, passengers)
-            .input('observations', sql.NVarChar, observations)
-            .query('INSERT INTO Transport_rotation_fiche (exploitants, arrivalTime, departureTime, passengers, observations) VALUES (@exploitants, @arrivalTime, @departureTime, @passengers, @observations)');
-        res.status(201).json(result.recordset);
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-});
-
-app.put('/api/transport_rotation_fiche/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { exploitants, arrivalTime, departureTime, passengers, observations } = req.body;
-        const pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-            .input('id', sql.Int, id)
-            .input('exploitants', sql.NVarChar, exploitants)
-            .input('arrivalTime', sql.NVarChar, arrivalTime)
-            .input('departureTime', sql.NVarChar, departureTime)
-            .input('passengers', sql.NVarChar, passengers)
-            .input('observations', sql.NVarChar, observations)
-            .query('UPDATE Transport_rotation_fiche SET exploitants = @exploitants, arrivalTime = @arrivalTime, departureTime = @departureTime, passengers = @passengers, observations = @observations WHERE id = @id');
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-});
-
-app.delete('/api/transport_rotation_fiche/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-            .input('id', sql.Int, id)
-            .query('DELETE FROM Transport_rotation_fiche WHERE id = @id');
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).send(err.message);
+        res.status(200).send('Database synced successfully');
+    } catch (error) {
+        console.error('Error syncing database:', error);
+        res.status(500).send('Error syncing database');
     }
 });
 
