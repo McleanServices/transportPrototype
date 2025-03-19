@@ -48,7 +48,6 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
       const dataToSubmit = {
         numero_exploitants: formData.exploitants,
         order_number: 1, // Default value, update as needed
-        taxi_id: 1, // Default value, update as needed
         airline_id: 1, // Default value, update as needed
         destination: '-',
         passenger_count: formData.passengerCount,

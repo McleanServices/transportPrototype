@@ -7,7 +7,7 @@ import React from 'react';
 import { useStorageState } from '../../context/useStorageState';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import HeaderTitle from '../../components/HeaderTitle';
+import HeaderTitle from '../../components/header/HeaderTitle';
 
 export default function Layout() {
 
@@ -119,6 +119,19 @@ export default function Layout() {
         <Drawer.Screen
           name="sqlQueryScreen"
           options={{
+            drawerLabel: 'SQL Query',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="camera"
+          options={{
+            drawerItemStyle: { display: 'none' },
             drawerLabel: 'SQL Query',
             headerTitle: () => (
               <HeaderTitle 

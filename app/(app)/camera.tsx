@@ -5,7 +5,7 @@ import {
   useCameraPermissions,
 } from "expo-camera";
 import { useRef, useState, useEffect } from "react";
-import { Button, Pressable, StyleSheet, Text, View, Image, ScrollView, FlatList } from "react-native"; // Updated import
+import { Button, Pressable, StyleSheet, Text, View, Image, FlatList } from "react-native"; // Updated import
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";

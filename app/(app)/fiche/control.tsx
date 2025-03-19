@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import * as Print from "expo-print";
 import { shareAsync } from "expo-sharing";
-import FaultsModal from "../../../components/FaultsModal";
-import StationModal from "../../../components/StationModal";
+import FaultsModal from "../../../components/modals/FaultsModal";
+import StationModal from "../../../components/modals/StationModal";
 import { Asset } from "expo-asset";
 import { manipulateAsync } from "expo-image-manipulator";
 import { useStorageState } from "../../../context/useStorageState";

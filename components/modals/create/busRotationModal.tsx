@@ -53,9 +53,8 @@ const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setMo
     }
     try {
       const dataToSubmit = {
-        numero_exploitants: formData.exploitants,
+        exploitants: formData.exploitants,
         order_number: 1,
-        bus_type_id: 1,
         date: new Date().toISOString().split('T')[0],
         arrival_time: formData.arrivalTime.toISOString(),
         departure_time: formData.departureTime ?? null,

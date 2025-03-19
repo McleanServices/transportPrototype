@@ -4,7 +4,6 @@ export interface AirportTaxiRotationData {
   airport_taxi_id?: number;
   numero_exploitants: string;
   order_number: number;
-  taxi_id: number;
   airline_id: number;
   destination: string;
   passenger_count: number;
@@ -16,7 +15,7 @@ export interface AirportTaxiRotationData {
 
 class AirportTaxiRotationService {
   private dbName: string = "transport.db";
-  private tableName: string = "airport_taxi_rotations";
+  private tableName: string = "airport_taxi_rotations_test";
   private db: SQLite.SQLiteDatabase | null = null;
   private operationQueue: Promise<void> = Promise.resolve();
 
@@ -44,22 +43,13 @@ class AirportTaxiRotationService {
           airport_taxi_id INTEGER PRIMARY KEY AUTOINCREMENT,
           numero_exploitants TEXT NOT NULL,
           order_number INTEGER NOT NULL,
-          taxi_id INTEGER NOT NULL,
           airline_id INTEGER,
           destination TEXT NOT NULL,
           passenger_count INTEGER NOT NULL,
           observations TEXT,
           date DATE NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (taxi_id) REFERENCES taxi(taxi_id),
           FOREIGN KEY (airline_id) REFERENCES airline_company(airline_id)
-        );
-      `);
-      await tx.execAsync(`
-        CREATE TABLE IF NOT EXISTS taxi (
-          taxi_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          taxi_number TEXT NOT NULL UNIQUE,
-          taxi_type TEXT CHECK(taxi_type IN ('Airport', 'Marigot')) NOT NULL
         );
       `);
       await tx.execAsync(`
@@ -176,18 +166,16 @@ class AirportTaxiRotationService {
             INSERT INTO ${this.tableName} (
               numero_exploitants,
               order_number,
-              taxi_id,
               airline_id,
               destination,
               passenger_count,
               observations,
               date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
           `,
           [
             data.numero_exploitants,
             data.order_number,
-            data.taxi_id,
             data.airline_id,
             data.destination,
             data.passenger_count,
@@ -222,7 +210,6 @@ class AirportTaxiRotationService {
             UPDATE ${this.tableName} SET
               numero_exploitants = ?,
               order_number = ?,
-              taxi_id = ?,
               airline_id = ?,
               destination = ?,
               passenger_count = ?,
@@ -233,7 +220,6 @@ class AirportTaxiRotationService {
             [
               data.numero_exploitants,
               data.order_number,
-              data.taxi_id,
               data.airline_id,
               data.destination,
               data.passenger_count,

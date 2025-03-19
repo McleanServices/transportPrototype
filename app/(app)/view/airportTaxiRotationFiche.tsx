@@ -3,18 +3,20 @@ import { Text, View, TouchableOpacity, StyleSheet, FlatList, Pressable } from "r
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
 import { SQLiteProvider } from 'expo-sqlite';
 import { useRouter } from 'expo-router';
-import { MarigotTaxiRotationData } from '../model/marigotTaxiRotationService';
-import * as marigotTaxiRotationController from '../controller/marigotTaxiRotationController';
+import { AirportTaxiRotationData } from '../../model/airportTaxiRotationService';
+import * as airportTaxiRotationController from '../../controller/airportTaxiRotationController';
 
-import MarigotTaxiRotationModal from '../../components/modals/create/marigotTaxiRotationModal';
-import EditMarigotTaxiRotationModal from '../../components/modals/update/editMarigotTaxiRotationModal';
+import AirportTaxiRotationModal from '../../../components/modals/create/airportTaxiRotationModal';
+import EditAirportTaxiRotationModal from '../../../components/modals/update/editAirportTaxiRotationModal';
 
-export default function MarigotTaxiRotationFiche() {
+
+export default function AirportTaxiRotationFiche() {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
-  const [data, setData] = useState<MarigotTaxiRotationData[]>([]);
+  const [data, setData] = useState<AirportTaxiRotationData[]>([]);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function MarigotTaxiRotationFiche() {
     try {
       setLoading(true);
       setError(null);
-      const records = await marigotTaxiRotationController.fetchAllMarigotTaxiRotations();
+      const records = await airportTaxiRotationController.fetchAllAirportTaxiRotations();
       setData(records);
     } catch (error) {
       console.error('Error fetching data from database', error);
@@ -36,23 +38,23 @@ export default function MarigotTaxiRotationFiche() {
 
   const handlePoliceControlAction = () => {
     if (selectedRow !== null) {
-      const marigot_taxi_rotation_id = data[selectedRow].marigot_taxi_id;
-      const additionalVariable = "marigot_taxi"; // Replace with your actual string variable
-      if (marigot_taxi_rotation_id !== undefined) {
-        // Navigate to the police control screen with the marigot_taxi_rotation_id and additionalVariable
-        console.log('id is', marigot_taxi_rotation_id);
-        router.push(`/fiche/control?marigot_taxi_rotation_id=${marigot_taxi_rotation_id}&type=${additionalVariable}`);
+      const airport_taxi_rotation_id = data[selectedRow].airport_taxi_id;
+      const additionalVariable = "air_taxi"; // Replace with your actual string variable
+      if (airport_taxi_rotation_id !== undefined) {
+        // Navigate to the police control screen with the airport_taxi_rotation_id and additionalVariable
+        console.log('id is', airport_taxi_rotation_id);
+        router.push(`/fiche/control?airport_taxi_rotation_id=${airport_taxi_rotation_id}&type=${additionalVariable}`);
       } else {
-        alert("Please select a taxi rotation first");
+        alert("Please select a bus rotation first");
       }
     } else {
-      alert("Please select a taxi rotation first");
+      alert("Please select a bus rotation first");
     }
   };
 
-  const handleFormSubmit = async (newFormData: MarigotTaxiRotationData) => {
+  const handleFormSubmit = async (newFormData: AirportTaxiRotationData) => {
     try {
-      const newId = await marigotTaxiRotationController.createMarigotTaxiRotation(newFormData);
+      const newId = await airportTaxiRotationController.createAirportTaxiRotation(newFormData);
       if (newId > 0) {
         await fetchData(); // Refresh data after successful insertion
         setModalVisible(false);
@@ -65,13 +67,13 @@ export default function MarigotTaxiRotationFiche() {
     }
   };
 
-  const handleEditFormSubmit = async (updatedFormData: MarigotTaxiRotationData) => {
+  const handleEditFormSubmit = async (updatedFormData: AirportTaxiRotationData) => {
     if (selectedRow === null) return;
 
     try {
-      const marigot_taxi_id = data[selectedRow]?.marigot_taxi_id;
-      if (marigot_taxi_id !== undefined) {
-        const success = await marigotTaxiRotationController.updateMarigotTaxiRotation(marigot_taxi_id, updatedFormData);
+      const airport_taxi_id = data[selectedRow]?.airport_taxi_id;
+      if (airport_taxi_id !== undefined) {
+        const success = await airportTaxiRotationController.updateAirportTaxiRotation(airport_taxi_id, updatedFormData);
         if (success) {
           await fetchData();
           setEditModalVisible(false);
@@ -88,9 +90,9 @@ export default function MarigotTaxiRotationFiche() {
     if (selectedRow === null) return;
 
     try {
-      const marigot_taxi_id = data[selectedRow]?.marigot_taxi_id;
-      if (marigot_taxi_id !== undefined) {
-        const success = await marigotTaxiRotationController.deleteMarigotTaxiRotation(marigot_taxi_id);
+      const airport_taxi_id = data[selectedRow]?.airport_taxi_id;
+      if (airport_taxi_id !== undefined) {
+        const success = await airportTaxiRotationController.deleteAirportTaxiRotation(airport_taxi_id);
         if (success) {
           await fetchData();
           setSelectedRow(null);
@@ -103,10 +105,16 @@ export default function MarigotTaxiRotationFiche() {
     }
   };
 
+  const handleFileAction = () => {
+    setViewModalVisible(true);
+  };
+
   useEffect(() => {
     const initAndFetch = async () => {
       try {
         setLoading(true);
+        // Since we're using the controller now, we might not need to explicitly initialize the database here
+        // as that should be handled by the service layer. Just fetch the data.
         await fetchData();
       } catch (error) {
         console.error('Error initializing and fetching data:', error);
@@ -117,6 +125,8 @@ export default function MarigotTaxiRotationFiche() {
     };
     
     initAndFetch();
+    
+    // No need for explicit database closure here as that's handled by the service layer
   }, []);
 
   // TableHeader component
@@ -125,9 +135,8 @@ export default function MarigotTaxiRotationFiche() {
       <View style={styles.headerRow}>
         <Text style={[styles.headerCell, styles.checkboxCell]}></Text>
         <Text style={[styles.headerCell, styles.indexCell]}>ORDRE</Text>
-        <Text style={styles.headerCell}>N° TAXI</Text>
-        <Text style={styles.headerCell}>BATEAU</Text>
-        <Text style={styles.headerCell}>AUTRE TRANSPORT</Text>
+        <Text style={styles.headerCell}>N° EXPLOITANTS</Text>
+        <Text style={styles.headerCell}>COMPAGNIE AERIENNE</Text>
         <Text style={styles.headerCell}>DESTINATION</Text>
         <Text style={styles.headerCell}>N° PASSAGERS</Text>
         <Text style={styles.headerCell}>OBSERVATIONS</Text>
@@ -135,7 +144,7 @@ export default function MarigotTaxiRotationFiche() {
     </View>
   );
 
-  const renderItem = ({ item, index }: { item: MarigotTaxiRotationData; index: number }) => {
+  const renderItem = ({ item, index }: { item: AirportTaxiRotationData; index: number }) => {
     const isSelected = selectedRow === index;
     const isHovered = hoveredRow === index;
     
@@ -157,10 +166,9 @@ export default function MarigotTaxiRotationFiche() {
             color={isSelected ? "#2D80E1" : "#D1D1D1"} 
           />
         </View>
-        <Text style={[styles.cell, styles.indexCell]}>{item.marigot_taxi_id}</Text>
-        <Text style={styles.cell}>{item.taxi_id}</Text>
-        <Text style={styles.cell}>{item.boat_name || '-'}</Text>
-        <Text style={styles.cell}>{item.other_transport || '-'}</Text>
+        <Text style={[styles.cell, styles.indexCell]}>{item.airport_taxi_id}</Text>
+        <Text style={styles.cell}>{item.numero_exploitants}</Text>
+        <Text style={styles.cell}>{item.airline_name || '-'}</Text>
         <Text style={styles.cell}>{item.destination}</Text>
         <Text style={styles.cell}>{item.passenger_count}</Text>
         <Text style={styles.cell}>{item.observations || '—'}</Text>
@@ -174,8 +182,8 @@ export default function MarigotTaxiRotationFiche() {
         {/* Header */}
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>
-            <Text style={styles.blueText}>MARIGOT TAXI ROTATIONS</Text>{' '}
-            <Text style={styles.redText}>DAILY ROTATIONS</Text>
+            <Text style={styles.blueText}>PRINCESS JULIANA INTERNATIONAL AIRPORT</Text>{' '}
+            <Text style={styles.redText}>ROTATIONS JOURNALIERES TAXIS AEROPORT</Text>
           </Text>
         </View>
 
@@ -200,7 +208,7 @@ export default function MarigotTaxiRotationFiche() {
           ) : (
             <FlatList
               data={data}
-              keyExtractor={(item, index) => `${item.marigot_taxi_id || index}`}
+              keyExtractor={(item, index) => `${item.airport_taxi_id || index}`}
               renderItem={renderItem}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={true}
@@ -210,6 +218,15 @@ export default function MarigotTaxiRotationFiche() {
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
+          {/* <TouchableOpacity 
+            style={styles.fileButton} 
+            onPress={handleFileAction}
+            activeOpacity={0.7}
+            disabled={selectedRow === null}
+          >
+            <FontAwesome name="file-text" size={22} color="white" />
+          </TouchableOpacity> */}
+
           {selectedRow !== null && (
             <>
               <TouchableOpacity 
@@ -228,14 +245,15 @@ export default function MarigotTaxiRotationFiche() {
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={styles.policeControlButton} 
-                onPress={handlePoliceControlAction}
-                activeOpacity={0.7}
-              >
-                <FontAwesome name="shield" size={22} color="white" />
-              </TouchableOpacity>
+                          style={styles.policeControlButton} 
+                          onPress={handlePoliceControlAction}
+                          activeOpacity={0.7}
+                        >
+                          <FontAwesome name="shield" size={22} color="white" />
+                        </TouchableOpacity>
             </>
           )}
+
 
           <TouchableOpacity 
             style={styles.fab} 
@@ -247,19 +265,27 @@ export default function MarigotTaxiRotationFiche() {
         </View>
 
         {/* Modals */}
-        <MarigotTaxiRotationModal 
+        <AirportTaxiRotationModal 
           modalVisible={modalVisible} 
           setModalVisible={setModalVisible} 
           onFormSubmit={handleFormSubmit}
         />
         {selectedRow !== null && (
-          <EditMarigotTaxiRotationModal
+          <EditAirportTaxiRotationModal
             modalVisible={editModalVisible}
             setModalVisible={setEditModalVisible}
             formData={data[selectedRow]}
             onFormSubmit={handleEditFormSubmit}
           />
         )}
+        {/* {selectedRow !== null && data[selectedRow]?.airport_taxi_id !== undefined && (
+          <AirportTaxiViewModal
+            airport_taxi_id={data[selectedRow].airport_taxi_id!}
+            modalVisible={viewModalVisible}
+            setModalVisible={setViewModalVisible}
+            formData={data[selectedRow]}
+          />
+        )} */}
       </View>
     </SQLiteProvider>
   );
@@ -405,6 +431,23 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+  },
+  fileButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    backgroundColor: '#219653',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   headerTitle: {
     fontSize: 15,

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import busRotationService from '../../app/model/busRotationService';
-
+import busRotationService from '../../../app/model/busRotationService';
+import { router } from 'expo-router';
 interface EditBusRotationModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
@@ -20,7 +20,7 @@ const EditBusRotationModal: React.FC<EditBusRotationModalProps> = ({ modalVisibl
         if (data) {
           setEditData({
             ...formData,
-            exploitants: data.numero_exploitants,
+            exploitants: data.exploitants,
             arrivalTime: new Date(data.arrival_time),
             departureTime: data.departure_time ? new Date(data.departure_time) : new Date(),
             passengers: String(data.passenger_count), // Convert to string for TextInput
@@ -61,7 +61,7 @@ const EditBusRotationModal: React.FC<EditBusRotationModalProps> = ({ modalVisibl
         arrival_time: arrivalTime.toISOString(),
         departure_time: departureTime ? departureTime.toISOString() : null,
         passenger_count: Number(editData.passengers), // Convert to number
-        numero_exploitants: editData.exploitants // Ensure exploitants is correctly set
+        exploitants: editData.exploitants // Ensure exploitants is correctly set
       };
 
       console.log('Data to update:', dataToUpdate); // Log the data being sent for insertion
@@ -195,6 +195,11 @@ const EditBusRotationModal: React.FC<EditBusRotationModalProps> = ({ modalVisibl
                   <View style={styles.buttonContainer}>
                     <Button title="Submit" onPress={handleSubmit} />
                     <Button title="Close" onPress={() => setModalVisible(false)} />
+                    <Button title="Add photos" onPress={() => {
+                      setModalVisible(false);
+                      router.push(`../camera?transport_fiche_id=${editData.bus_rotation_id}`);
+                    }
+                    } />
                   </View>
                 </View>
               </View>

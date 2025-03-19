@@ -4,17 +4,17 @@ import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useRouter } from 'expo-router';
 
-import BusRotationModal from '../../components/modals/create/busRotationModal';
-import EditBusRotationModal from '../../components/modals/update/editBusRotationModal';
-import ViewModal from '../../components/modals/viewModal';
+import BusRotationModal from '../../../components/modals/create/busRotationModal';
+import EditBusRotationModal from '../../../components/modals/update/editBusRotationModal';
+import ViewModal from '../../../components/modals/viewModal';
 
 import {
   fetchAllBusRotations,
   createBusRotation,
   updateBusRotation,
   deleteBusRotation,
-} from '../controller/busRotationController';
-import { BusRotationData } from '../model/busRotationService';
+} from '../../controller/busRotationController';
+import { BusRotationData } from '../../model/busRotationService';
 
 export default function BusRotationFiche() {
   const router = useRouter();
@@ -80,6 +80,8 @@ export default function BusRotationFiche() {
     setViewModalVisible(true);
   };
 
+
+
   const handlePoliceControlAction = () => {
     if (selectedRow !== null) {
       const additionalVariable = "bus"; 
@@ -122,8 +124,8 @@ export default function BusRotationFiche() {
             color={isSelected ? "#2D80E1" : "#D1D1D1"} 
           />
         </View>
-        <Text style={[styles.cell, styles.indexCell]}>{index}</Text>
-        <Text style={styles.cell}>{item.numero_exploitants}</Text>
+        <Text style={[styles.cell, styles.indexCell]}>{index+1}</Text>
+        <Text style={styles.cell}>{item.exploitants}</Text>
         <Text style={styles.cell}>{new Date(item.arrival_time).toLocaleTimeString()}</Text>
         <Text style={styles.cell}>{item.departure_time ? new Date(item.departure_time).toLocaleTimeString() : '—'}</Text>
         <Text style={styles.cell}>{item.passenger_count}</Text>

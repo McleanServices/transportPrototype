@@ -20,8 +20,7 @@ CREATE TABLE bus_type (
     bus_type_name TEXT NOT NULL UNIQUE
 );
 
--- Prepopulate bus_type table with allowed values
-INSERT INTO bus_type (bus_type_name) VALUES ('TCP'), ('TCI'), ('ZH');
+
 
 -- 4. Airport Taxi Rotation Table
 CREATE TABLE airport_taxi_rotation (
@@ -68,3 +67,13 @@ CREATE TABLE marigot_taxi_rotation (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp of record creation
     FOREIGN KEY (taxi_id) REFERENCES taxi(taxi_id)
 );
+
+
+CREATE TABLE IF NOT EXISTS Photos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uri TEXT,
+            transport_fiche_id INTEGER,
+          );
+
+
+SELECT name FROM sqlite_master WHERE type='table';

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, ScrollView } from 'react-native';
 import airportTaxiRotationService from '../model/airportTaxiRotationService';
+import busRotationService from '../model/busRotationService';
 
 export default function SQLQueryScreen() {
   const [query, setQuery] = useState('');
@@ -21,6 +22,26 @@ export default function SQLQueryScreen() {
     }
   };
 
+  const syncDatabase = async () => {
+    try {
+      const data = await busRotationService.getAllBusRotationsForSync();
+      const response = await fetch('http://localhost:3000/sync-database', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (response.ok) {
+        alert('Database synced successfully');
+      } else {
+        alert('Failed to sync database');
+      }
+    } catch (error) {
+      alert('Error syncing database');
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
       <TextInput
@@ -30,6 +51,7 @@ export default function SQLQueryScreen() {
         style={{ borderWidth: 1, padding: 8, marginBottom: 16 }}
       />
       <Button title="Execute Query" onPress={executeQuery} />
+      <Button title="Sync Database" onPress={syncDatabase} />
       {error && <Text style={{ color: 'red', marginTop: 16 }}>{error}</Text>}
       <View style={{ marginTop: 16 }}>
         {results.map((result, index) => (

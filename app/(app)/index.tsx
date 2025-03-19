@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/auth';
-import BusRotationFiche from './busRotationFiche';
+import BusRotationFiche from './view/busRotationFiche';
 
 export default function Index() {
   const { session } = useAuth();

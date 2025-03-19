@@ -20,7 +20,6 @@ const EditMarigotTaxiRotationModal: React.FC<EditMarigotTaxiRotationModalProps> 
         if (data) {
           setEditData({
             ...formData,
-            taxi_id: data.taxi_id,
             boat_name: data.boat_name,
             other_transport: data.other_transport,
             destination: data.destination,

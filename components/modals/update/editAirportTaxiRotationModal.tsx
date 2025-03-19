@@ -51,7 +51,6 @@ const EditAirportTaxiRotationModal: React.FC<EditAirportTaxiRotationModalProps> 
       const dataToUpdate = {
         numero_exploitants: editData.exploitants,
         order_number: formData.order_number,
-        taxi_id: formData.taxi_id,
         airline_id: formData.airline_id,
         destination: editData.destination,
         passenger_count: editData.passengerCount,

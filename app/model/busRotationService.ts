@@ -2,9 +2,7 @@ import * as SQLite from 'expo-sqlite';
 
 export interface BusRotationData {
   bus_rotation_id?: number;
-  numero_exploitants: string;
-  order_number: number;
-  bus_type_id: number;
+  exploitants: string;
   date: string;
   arrival_time: string;
   departure_time: string | null;
@@ -15,7 +13,7 @@ export interface BusRotationData {
 
 class BusRotationService {
   private dbName: string = 'transport.db';
-  private tableName: string = 'bus_daily_rotation';
+  private tableName: string = 'bus_rotation';
   private db: SQLite.SQLiteDatabase | null = null;
 
   async initDatabase(): Promise<void> {
@@ -25,22 +23,13 @@ class BusRotationService {
         await this.db!.execAsync(`
           CREATE TABLE IF NOT EXISTS ${this.tableName} (
             bus_rotation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            numero_exploitants TEXT NOT NULL,
-            order_number INTEGER NOT NULL,
-            bus_type_id INTEGER NOT NULL,
+            exploitants TEXT NOT NULL,
             date DATE NOT NULL,
             arrival_time TEXT NOT NULL,
             departure_time TEXT,
             passenger_count INTEGER NOT NULL,
             observations TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (bus_type_id) REFERENCES bus_type(bus_type_id)
-          );
-        `);
-        await this.db!.execAsync(`
-          CREATE TABLE IF NOT EXISTS bus_type (
-            bus_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            bus_type_name TEXT NOT NULL UNIQUE
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           );
         `);
       });
@@ -59,16 +48,13 @@ class BusRotationService {
       await this.db!.execAsync(`
         CREATE TABLE IF NOT EXISTS ${this.tableName} (
           bus_rotation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          numero_exploitants TEXT NOT NULL,
-          order_number INTEGER NOT NULL,
-          bus_type_id INTEGER NOT NULL,
-          date DATE NOT NULL,
-          arrival_time TEXT NOT NULL,
+          exploitants TEXT,
+          date DATE,
+          arrival_time TEXT,
           departure_time TEXT,
-          passenger_count INTEGER NOT NULL,
+          passenger_count INTEGER,
           observations TEXT,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (bus_type_id) REFERENCES bus_type(bus_type_id)
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
     });
@@ -96,6 +82,31 @@ class BusRotationService {
       return records;
     } catch (error) {
       console.error('Error getting bus rotations:', error);
+      throw error;
+    }
+  }
+
+  async getAllBusRotationsForSync(): Promise<BusRotationData[]> {
+    try {
+      await this.ensureTableExists();
+      if (!this.db) {
+        this.db = await SQLite.openDatabaseAsync(this.dbName);
+      }
+      let records: BusRotationData[] = [];
+
+      await this.db.withTransactionAsync(async () => {
+        const result = await this.db!.getAllAsync(`
+          SELECT bus_rotation_id, exploitants, date, arrival_time, departure_time, passenger_count, observations, created_at FROM ${this.tableName}
+        `);
+        
+        if (result && Array.isArray(result)) {
+          records = result as BusRotationData[];
+        }
+      });
+      
+      return records;
+    } catch (error) {
+      console.error('Error getting bus rotations for sync:', error);
       throw error;
     }
   }
@@ -137,19 +148,15 @@ class BusRotationService {
       await this.db.withTransactionAsync(async () => {
         const result = await this.db!.runAsync(`
           INSERT INTO ${this.tableName} (
-            numero_exploitants,
-            order_number,
-            bus_type_id,
+            exploitants,
             date,
             arrival_time,
             departure_time,
             passenger_count,
             observations
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?)
         `, [
-          data.numero_exploitants,
-          data.order_number,
-          data.bus_type_id,
+          data.exploitants,
           data.date,
           data.arrival_time,
           data.departure_time ?? null,
@@ -178,9 +185,7 @@ class BusRotationService {
       await this.db.withTransactionAsync(async () => {
         await this.db!.runAsync(`
           UPDATE ${this.tableName} SET
-            numero_exploitants = ?,
-            order_number = ?,
-            bus_type_id = ?,
+            exploitants = ?,
             date = ?,
             arrival_time = ?,
             departure_time = ?,
@@ -188,9 +193,7 @@ class BusRotationService {
             observations = ?
           WHERE bus_rotation_id = ?
         `, [
-          data.numero_exploitants,
-          data.order_number,
-          data.bus_type_id,
+          data.exploitants,
           data.date,
           data.arrival_time,
           data.departure_time ?? null,

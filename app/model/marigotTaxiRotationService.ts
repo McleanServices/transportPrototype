@@ -41,7 +41,6 @@ class MarigotTaxiRotationService {
       await tx.execAsync(`
         CREATE TABLE IF NOT EXISTS ${this.tableName} (
           marigot_taxi_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          order_number INTEGER NOT NULL,
           taxi_id INTEGER NOT NULL,
           boat_name TEXT,
           other_transport TEXT,

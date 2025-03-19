@@ -22,7 +22,7 @@ const Login = () => {
                 await dbService.initDatabase(); // Initialize the database first
                 const allUsers = await dbService.getallUsers();
                 setUsers(allUsers);
-                console.log('Loaded users:', allUsers);
+                // console.log('Loaded users:', allUsers);
             } catch (error) {
                 console.error('Error loading users:', error);
             }
@@ -31,13 +31,13 @@ const Login = () => {
         loadUsers();
     }, []);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const validUser = users.find(
             user => user.username === username && user.password === password
         );
 
         if (validUser && validUser.user_id) {
-            signIn('dummyToken', { id: validUser.user_id, role: validUser.role });
+            await signIn('dummyToken', { id: validUser.user_id, role: validUser.role });
             setStoredPrenom(validUser.prenom);
             setStoredNom(validUser.nom);
             setStoredRole(validUser.role);
