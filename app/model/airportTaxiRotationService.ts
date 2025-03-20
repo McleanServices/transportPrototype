@@ -299,6 +299,7 @@ class AirportTaxiRotationService {
       this.db = null;
     }
   }
+  // Use the port provided by Azure or default to 3000 for local development
 }
 
 const airportTaxiRotationService = new AirportTaxiRotationService();
