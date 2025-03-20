@@ -142,6 +142,19 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
+          name="webViewScreen"
+          options={{
+            drawerLabel: 'Power Bi Report',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+              />
+            ),
+          }}
+        />
+        
+        <Drawer.Screen
           name="airportTaxiRotationFiche"
           options={{
             drawerLabel: 'Airport Rotation Fiche',
