@@ -87,6 +87,48 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
+          name="view/busRotationFiche" 
+          options={{
+            drawerLabel: 'Bus Rotation Fiche',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+                
+              />
+            ),
+            title: 'overview',
+          }}
+        />
+         <Drawer.Screen
+          name="view/marigotTaxiRotationFiche" 
+          options={{
+            drawerLabel: 'Marigot Rotation Fiche',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+                
+              />
+            ),
+            title: 'overview',
+          }}
+        />
+         <Drawer.Screen
+          name="view/airportTaxiRotationFiche" 
+          options={{
+            drawerLabel: 'Airport Rotation Fiche',
+            headerTitle: () => (
+              <HeaderTitle 
+                logoSource={require('../../assets/images/logo.png')} 
+                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
+                
+              />
+            ),
+            title: 'overview',
+          }}
+        />
+        <Drawer.Screen
           name="parametres" 
           options={{
             drawerItemStyle: { display: 'none' },
@@ -119,6 +161,7 @@ export default function Layout() {
         <Drawer.Screen
           name="sqlQueryScreen"
           options={{
+            drawerItemStyle: { display: 'none' },
             drawerLabel: 'SQL Query',
             headerTitle: () => (
               <HeaderTitle 

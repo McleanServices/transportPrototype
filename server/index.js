@@ -1,8 +1,11 @@
 const express = require('express');
 const sql = require('mssql');
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
+
+app.use(cors()); // Allow all origins
 
 // SQL Server configuration
 const sqlConfig = {
@@ -97,6 +100,11 @@ app.post('/sync-database', async (req, res) => {
         console.error('Error syncing database:', error);
         res.status(500).send('Error syncing database');
     }
+});
+
+// Test endpoint
+app.get('/test', (req, res) => {
+    res.status(200).send('API is working');
 });
 
 app.listen(port, () => {

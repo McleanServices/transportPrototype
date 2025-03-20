@@ -45,6 +45,17 @@ export class DatabaseService {
                 );
             `);
 
+            // Check if the sessionKey column exists and add it if necessary
+            const result = await tx.getAllAsync(`
+                PRAGMA table_info(${this.tableName})
+            `);
+            const columns = result.map((row: any) => row.name);
+            if (!columns.includes('sessionKey')) {
+                await tx.execAsync(`
+                    ALTER TABLE ${this.tableName} ADD COLUMN sessionKey TEXT
+                `);
+            }
+
             const usernames = ['tyrecem', 'tym'];
             const prenoms = ['Tyrece', 'Ty'];
             const passwords = ['password', '123'];
