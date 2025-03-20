@@ -65,6 +65,7 @@ export default function Control() {
   const [couleurVehicule, setCouleurVehicule] = useState("");
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
+  const [customFaults, setCustomFaults] = useState([{ fault: "" }]);
 
   const [storedNom] = useStorageState("nom");
   const [storedPrenom] = useStorageState("prenom");
@@ -170,6 +171,21 @@ export default function Control() {
   const removeAssistant = (index: number) => {
     const newAssistants = assistants.filter((_, i) => i !== index);
     setAssistants(newAssistants);
+  };
+
+  const addCustomFault = () => {
+    setCustomFaults([...customFaults, { fault: "" }]);
+  };
+
+  const updateCustomFault = (index: number, value: string) => {
+    const newCustomFaults = [...customFaults];
+    newCustomFaults[index].fault = value;
+    setCustomFaults(newCustomFaults);
+  };
+
+  const removeCustomFault = (index: number) => {
+    const newCustomFaults = customFaults.filter((_, i) => i !== index);
+    setCustomFaults(newCustomFaults);
   };
 
   const printToFile = async () => {
@@ -575,6 +591,30 @@ export default function Control() {
                     ))}
                   </View>
                 )}
+                <Text style={styles.sectionTitle}>Autres Faute(s):</Text>
+                {customFaults.map((customFault, index) => (
+                  <View key={index} style={styles.inputGroup}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter custom fault"
+                      value={customFault.fault}
+                      onChangeText={(text) => updateCustomFault(index, text)}
+                      editable={!formExists}
+                    />
+                    <Button
+                      title="Remove"
+                      onPress={() => removeCustomFault(index)}
+                      disabled={formExists}
+                      color="#ff4444"
+                    />
+                  </View>
+                ))}
+                <Button
+                  title="Add Custom Fault"
+                  onPress={addCustomFault}
+                  disabled={formExists}
+                  color="#4CAF50"
+                />
               </View>
   
               {/* Buttons Section */}
