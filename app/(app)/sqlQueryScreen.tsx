@@ -25,7 +25,7 @@ export default function SQLQueryScreen() {
   const syncDatabase = async () => {
     try {
       const data = await busRotationService.getAllBusRotationsForSync();
-      const response = await fetch('http://localhost:3000/sync-database', {
+      const response = await fetch('https://techwithtyrece.com/api/sync-database', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,10 +35,13 @@ export default function SQLQueryScreen() {
       if (response.ok) {
         alert('Database synced successfully');
       } else {
+        const errorText = await response.text();
+        console.error('Sync failed with status:', response.status, 'Response:', errorText);
         alert('Failed to sync database');
       }
     } catch (error) {
-      alert('Error syncing database');
+      console.error('Error syncing databases:', error);
+      alert('Error syncing databases');
     }
   };
 
