@@ -31,11 +31,14 @@ const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setMo
     let newErrors = { exploitants: '', arrivalTime: '' };
 
     if (!formData.exploitants) {
-      newErrors.exploitants = 'Exploitants is required';
+      newErrors.exploitants = 'Le champ "N Exploitants" est requis';
+      valid = false;
+    } else if (!/^\d+$/.test(formData.exploitants)) {
+      newErrors.exploitants = 'Le champ "N Exploitants" doit être numérique';
       valid = false;
     }
     if (!formData.arrivalTime) {
-      newErrors.arrivalTime = 'Arrival time is required';
+      newErrors.arrivalTime = "L'heure d'arrivée est requise";
       valid = false;
     }
 
@@ -45,6 +48,17 @@ const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setMo
 
   const handleInputChange = (name: string, value: any) => {
     setFormData({ ...formData, [name]: value });
+
+    // Real-time validation
+    if (name === 'exploitants') {
+      if (!value) {
+        setErrors((prevErrors) => ({ ...prevErrors, exploitants: 'Le champ "N Exploitants" est requis' }));
+      } else if (!/^\d+$/.test(value)) {
+        setErrors((prevErrors) => ({ ...prevErrors, exploitants: 'Le champ "N Exploitants" doit être numérique' }));
+      } else {
+        setErrors((prevErrors) => ({ ...prevErrors, exploitants: '' }));
+      }
+    }
   };
 
   const handleSubmit = async () => {
@@ -122,14 +136,18 @@ const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setMo
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>N EXPLOITANTS</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    errors.exploitants ? styles.inputError : null, // Apply red border if error exists
+                  ]}
                   value={formData.exploitants}
                   onChangeText={(text) => handleInputChange('exploitants', text)}
+                  keyboardType="numeric" // Ensure numeric keyboard is displayed
                 />
                 {errors.exploitants ? <Text style={styles.errorText}>{errors.exploitants}</Text> : null}
               </View>
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>HEURE D'ARRIVEE</Text>
+                <Text style={styles.label}>HEURE D'ARRIVÉE</Text>
                 <TouchableOpacity
                   style={styles.input}
                   onPress={showArrivalTimePicker}
@@ -145,8 +163,10 @@ const BusRotationModal: React.FC<BusRotationModalProps> = ({ modalVisible, setMo
                 {errors.arrivalTime ? <Text style={styles.errorText}>{errors.arrivalTime}</Text> : null}
               </View>
             </View>
-            <Button title="Submit" onPress={handleSubmit} disabled={!isFormValid()} />
-            <Button title="Close" onPress={() => setModalVisible(false)} />
+            <View style={styles.buttonRow}>
+              <Button title="Fermer" onPress={() => setModalVisible(false)} />
+              <Button title="Soumettre" onPress={handleSubmit} disabled={!isFormValid()} />
+            </View>
           </View>
         </View>
       </Modal>
@@ -235,6 +255,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: -10,
     marginBottom: 10,
+  },
+  inputError: {
+    borderColor: 'red',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 15,
   },
 });
 

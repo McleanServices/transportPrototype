@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, Button, StyleSheet, TextInput } from 'react-native';
 
-
-
 interface AirportTaxiRotationModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
@@ -25,10 +23,13 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
 
   const validateForm = () => {
     let valid = true;
-    let newErrors = { exploitants: ''};
+    let newErrors = { exploitants: '' };
 
     if (!formData.exploitants) {
-      newErrors.exploitants = 'Exploitants is required';
+      newErrors.exploitants = 'Le champ "N Exploitants" est requis';
+      valid = false;
+    } else if (!/^\d+$/.test(formData.exploitants)) {
+      newErrors.exploitants = 'Le champ "N Exploitants" doit contenir uniquement des chiffres';
       valid = false;
     }
 
@@ -38,6 +39,17 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
 
   const handleInputChange = (name: string, value: any) => {
     setFormData({ ...formData, [name]: value });
+
+    // Real-time validation
+    if (name === 'exploitants') {
+      if (!value) {
+        setErrors((prevErrors) => ({ ...prevErrors, exploitants: 'Le champ "N Exploitants" est requis' }));
+      } else if (!/^\d+$/.test(value)) {
+        setErrors((prevErrors) => ({ ...prevErrors, exploitants: 'Le champ "N Exploitants" doit contenir uniquement des chiffres' }));
+      } else {
+        setErrors((prevErrors) => ({ ...prevErrors, exploitants: '' }));
+      }
+    }
   };
 
   const handleSubmit = async () => {
@@ -77,7 +89,7 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
   };
 
   const isFormValid = () => {
-    return formData.exploitants ;
+    return formData.exploitants;
   };
 
   return (
@@ -95,15 +107,21 @@ const AirportTaxiRotationModal: React.FC<AirportTaxiRotationModalProps> = ({ mod
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>N EXPLOITANTS</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    errors.exploitants ? styles.inputError : null, // Apply red border if error exists
+                  ]}
                   value={formData.exploitants}
                   onChangeText={(text) => handleInputChange('exploitants', text)}
                 />
                 {errors.exploitants ? <Text style={styles.errorText}>{errors.exploitants}</Text> : null}
               </View>
             </View>
-            <Button title="Submit" onPress={handleSubmit} disabled={!isFormValid()} />
-            <Button title="Close" onPress={() => setModalVisible(false)} />
+            <View style={styles.buttonRow}>
+              <Button title="Close" onPress={() => setModalVisible(false)} />
+              <Button title="Submit" onPress={handleSubmit} disabled={!isFormValid()} />
+              
+            </View>
           </View>
         </View>
       </Modal>
@@ -166,11 +184,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
   },
+  inputError: {
+    borderColor: 'red',
+  },
   errorText: {
     color: 'red',
     fontSize: 12,
     marginTop: -10,
     marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 15,
   },
 });
 
