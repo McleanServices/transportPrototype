@@ -1,19 +1,14 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
 import { Text, View, Pressable, Animated } from 'react-native'; 
-import { Redirect} from 'expo-router';
-import { useAuth } from '../../context/auth';
 import React from 'react';
-import { useStorageState } from '../../context/useStorageState';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import HeaderTitle from '../../components/header/HeaderTitle';
 
 export default function Layout() {
 
-  const { session, isLoading } = useAuth();
   const bounceAnimation = React.useMemo(() => new Animated.Value(0), []);
-  const [storedEmail] = useStorageState('nom');
   const router = useRouter();
 
   React.useEffect(() => {
@@ -33,19 +28,6 @@ export default function Layout() {
     ).start();
   }, [bounceAnimation]);
 
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Chargement...</Text>
-      </View>
-    );
-  }
-
-  if (session === null) {
-    return <Redirect href="../login" />;
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer>
@@ -63,9 +45,7 @@ export default function Layout() {
               <Pressable onPress={() => router.push('/parametres')}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
                   <Ionicons name="person-circle" size={24} color="black" />
-                  <Text style={{ marginLeft: 5 }}>
-                    {storedEmail ? storedEmail : ''}
-                  </Text>
+                  <Text style={{ marginLeft: 5 }}></Text>
                 </View>
               </Pressable>
             ),
@@ -80,7 +60,6 @@ export default function Layout() {
               <HeaderTitle 
                 logoSource={require('../../assets/images/logo.png')} 
                 title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
-                
               />
             ),
             title: 'overview',
@@ -94,7 +73,6 @@ export default function Layout() {
               <HeaderTitle 
                 logoSource={require('../../assets/images/logo.png')} 
                 title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
-                
               />
             ),
             title: 'overview',
@@ -108,7 +86,6 @@ export default function Layout() {
               <HeaderTitle 
                 logoSource={require('../../assets/images/logo.png')} 
                 title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
-                
               />
             ),
             title: 'overview',
@@ -122,7 +99,6 @@ export default function Layout() {
               <HeaderTitle 
                 logoSource={require('../../assets/images/logo.png')} 
                 title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
-                
               />
             ),
             title: 'overview',
@@ -137,27 +113,12 @@ export default function Layout() {
               <HeaderTitle 
                 logoSource={require('../../assets/images/logo.png')} 
                 title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
-                
               />
             ),
             title: 'overview',
           }}
         />
-        <Drawer.Screen
-          name="busRotationFiche" 
-          options={{
-            drawerItemStyle: { display: 'none' },
-            drawerLabel: 'fiche',
-            headerTitle: () => (
-              <HeaderTitle 
-                logoSource={require('../../assets/images/logo.png')} 
-                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
-                
-              />
-            ),
-            title: 'overview',
-          }}
-        />
+       
         <Drawer.Screen
           name="sqlQueryScreen"
           options={{
@@ -196,27 +157,28 @@ export default function Layout() {
             ),
           }}
         />
-        
         <Drawer.Screen
-          name="airportTaxiRotationFiche"
+          name="model/airportTaxiRotationService"
           options={{
-            drawerLabel: 'Airport Rotation Fiche',
-            headerTitle: () => (
-              <HeaderTitle 
-                logoSource={require('../../assets/images/logo.png')} 
-                title="DIRECTION TRANSPORT ET REGLEMENTATIONS" 
-              />
-            ),
-            headerRight: () => (
-              <Pressable onPress={() => router.push('/parametres')}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
-                  <Ionicons name="person-circle" size={24} color="black" />
-                  <Text style={{ marginLeft: 5 }}>
-                    {storedEmail ? storedEmail : ''}
-                  </Text>
-                </View>
-              </Pressable>
-            ),
+            drawerItemStyle: { display: 'none' },
+          }}
+        />
+        <Drawer.Screen
+          name="model/busRotationService"
+          options={{
+            drawerItemStyle: { display: 'none' },
+          }}
+        />
+        <Drawer.Screen
+          name="model/marigotTaxiRotationService"
+          options={{
+            drawerItemStyle: { display: 'none' },
+          }}
+        />
+        <Drawer.Screen
+          name="model/ucvformService"
+          options={{
+            drawerItemStyle: { display: 'none' },
           }}
         />
       </Drawer>

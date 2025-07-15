@@ -13,8 +13,8 @@ import {
   createBusRotation,
   updateBusRotation,
   deleteBusRotation,
-} from '../../controller/busRotationController';
-import { BusRotationData } from '../../model/busRotationService';
+} from './../controller/busRotationController';
+import { BusRotationData } from './../model/busRotationService';
 
 export default function BusRotationFiche() {
   const router = useRouter();

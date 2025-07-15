@@ -1,8 +1,12 @@
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
-import { useAuth } from '../../context/auth'; // Import useAuth
+import { useRouter } from 'expo-router';
 
 const Settings = () => {
-  const { signOut } = useAuth(); // Get signOut function from useAuth
+  const router = useRouter();
+
+  const signOut = () => {
+    router.push('/login');
+  };
 
   return (
     <View style={{ flex: 1 }}>

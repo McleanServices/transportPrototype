@@ -3,8 +3,8 @@ import { Text, View, TouchableOpacity, StyleSheet, FlatList, Pressable } from "r
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
 import { SQLiteProvider } from 'expo-sqlite';
 import { useRouter } from 'expo-router';
-import { MarigotTaxiRotationData } from '../../model/marigotTaxiRotationService';
-import * as marigotTaxiRotationController from '../../controller/marigotTaxiRotationController';
+import { MarigotTaxiRotationData } from './../model/marigotTaxiRotationService';
+import * as marigotTaxiRotationController from './../controller/marigotTaxiRotationController';
 
 import MarigotTaxiRotationModal from '../../../components/modals/create/marigotTaxiRotationModal';
 import EditMarigotTaxiRotationModal from '../../../components/modals/update/editMarigotTaxiRotationModal';

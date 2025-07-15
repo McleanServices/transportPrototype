@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import airportTaxiRotationService from '../../../app/model/airportTaxiRotationService';
+import airportTaxiRotationService from '../../../app/(app)/model/airportTaxiRotationService';
 
 interface EditAirportTaxiRotationModalProps {
   modalVisible: boolean;

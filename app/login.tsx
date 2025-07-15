@@ -1,129 +1,223 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useAuth } from '../context/auth';
 import { router } from 'expo-router';
-import { useStorageState } from '../context/useStorageState';
-import { DatabaseService } from './model/authService';
-import type { TransportFormData } from './model/authService';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Keyboard } from 'react-native';
+// Add icon support
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { signIn } = useAuth();
-    const [storedPrenom, setStoredPrenom] = useStorageState('prenom');
-    const [storedNom, setStoredNom] = useStorageState('nom');
-    const [storedRole, setStoredRole] = useStorageState('role');
-    const [users, setUsers] = useState<TransportFormData[]>([]);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
 
     useEffect(() => {
-        const loadUsers = async () => {
-            try {
-                const dbService = new DatabaseService();
-                await dbService.initDatabase(); // Initialize the database first
-                const allUsers = await dbService.getallUsers();
-                setUsers(allUsers);
-                // console.log('Loaded users:', allUsers);
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
+        const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+            setKeyboardVisible(true);
+        });
+        const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardVisible(false);
+        });
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
         };
-
-        loadUsers();
     }, []);
 
     const handleSubmit = async () => {
-        const validUser = users.find(
-            user => user.username === username && user.password === password
-        );
-
-        if (validUser && validUser.user_id) {
-            await signIn('dummyToken', { id: validUser.user_id, role: validUser.role });
-            setStoredPrenom(validUser.prenom);
-            setStoredNom(validUser.nom);
-            setStoredRole(validUser.role);
-            router.replace('./(app)');
-        } else {
-            console.log('Invalid credentials');
-        }
+        router.push('./(app)')
     };
 
+    const handleInputFocus = () => setKeyboardVisible(true);
+    const handleInputBlur = () => setKeyboardVisible(false);
+
     return (
-        <View style={styles.container}>
-            <Image source={require('../assets/images/logo.png')} style={styles.logo} />
-            <View style={styles.inputContainer}>
-                <TextInput
-                    placeholder="Username"
-                    value={username}
-                    onChangeText={setUsername}
-                    style={styles.input}
-                />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={60}
+        >
+            <View style={styles.splitContainer}>
+                {/* Left Info Panel */}
+                <View style={styles.leftPanel}>
+                    <Text style={styles.leftTitle}>DIRECTION TRANSPORT{"\n"}ET REGLEMENTATIONS</Text>
+                    <Text style={styles.leftSubtitle}>Unité Contrôle et Vérification</Text>
+                    <View style={styles.featureList}>
+                        <View style={styles.featureItem}>
+                            <MaterialIcons name="edit-document" size={24} color="#fff" style={styles.featureIcon} />
+                            <Text style={styles.featureText}>Saisie des fiches de rotations</Text>
+                        </View>
+                        <View style={styles.featureItem}>
+                            <MaterialIcons name="edit-note" size={24} color="#fff" style={styles.featureIcon} />
+                            <Text style={styles.featureText}>Saisie de fiches d'information</Text>
+                        </View>
+                        <View style={styles.featureItem}>
+                            <MaterialCommunityIcons name="alarm-light-outline" size={24} color="#fff" style={styles.featureIcon} />
+                            <Text style={styles.featureText}>Signalement d'incidents</Text>
+                        </View>
+                        <View style={[styles.featureItem, { marginTop: 30 }]}> 
+                            <Text style={styles.featureText}>Consultation des fiches enregistrées</Text>
+                        </View>
+                    </View>
+                    <View style={styles.bottomIcons}>
+                        <MaterialCommunityIcons name="taxi" size={40} color="#fff" style={{ marginRight: 30 }} />
+                        <MaterialCommunityIcons name="bus" size={40} color="#fff" />
+                    </View>
+                </View>
+                {/* Right Login Panel */}
+                <View style={styles.rightPanel}>
+                  <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    {!keyboardVisible && (
+                      <Image source={require('../assets/images/logo.png')} style={styles.logoSaintMartin} />
+                    )}
+                    <View style={styles.loginBox}>
+                        <Text style={styles.loginTitle}>Connexion Agent</Text>
+                        <Text style={styles.label}>Identifiant</Text>
+                        <TextInput
+                            placeholder="agent@gmail.com"
+                            value={username}
+                            onChangeText={setUsername}
+                            style={styles.input}
+                            autoCapitalize="none"
+                            onFocus={handleInputFocus}
+                            onBlur={handleInputBlur}
+                        />
+                        <Text style={styles.label}>Mot de passe</Text>
+                        <TextInput
+                            placeholder="agent!@1209"
+                            secureTextEntry
+                            value={password}
+                            onChangeText={setPassword}
+                            style={styles.input}
+                            onFocus={handleInputFocus}
+                            onBlur={handleInputBlur}
+                        />
+                        <TouchableOpacity style={styles.loginButton} onPress={handleSubmit}>
+                            <Text style={styles.loginButtonText}>Se Connecter</Text>
+                        </TouchableOpacity>
+                    </View>
+                  </ScrollView>
+                </View>
             </View>
-            <View style={styles.inputContainer}>
-                <TextInput
-                    placeholder="Password"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    style={styles.input}
-                />
-            </View>
-            <TouchableOpacity style={styles.loginButton} onPress={handleSubmit}>
-                <Text style={styles.loginText}>LOGIN</Text>
-            </TouchableOpacity>
-            
-        </View>
+        </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    splitContainer: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f5fcff',
-        padding: 20,
+        flexDirection: 'row',
+        backgroundColor: '#fff',
     },
-    logo: {
-        width: 140,
-        height: 100,
+    leftPanel: {
+        flex: 1,
+        backgroundColor: '#0a6d8a',
+        padding: 40,
+        justifyContent: 'space-between',
+    },
+    leftTitle: {
+        color: '#fff',
+        fontSize: 34,
+        fontWeight: '300',
+        marginBottom: 30,
+        marginTop: 30,
+        lineHeight: 40,
+        fontFamily: 'Roboto',
+    },
+    leftSubtitle: {
+        color: '#fff',
+        fontSize: 26,
+        fontWeight: 'bold',
+        marginBottom: 40,
+        fontFamily: 'Roboto',
+    },
+    featureList: {
+        marginTop: 20,
+    },
+    featureItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: 20,
     },
-    inputContainer: {
-        width: '100%',
-        backgroundColor: '#e3f2fd',
-        borderRadius: 25,
-        padding: 10,
-        marginBottom: 15,
+    featureIcon: {
+        marginRight: 15,
     },
-    input: {
-        height: 40,
-        color: '#000',
-        paddingHorizontal: 10,
+    featureText: {
+        color: '#fff',
+        fontSize: 18,
+        fontFamily: 'Roboto',
     },
-    loginButton: {
-        backgroundColor: '#64b5f6',
-        padding: 15,
-        borderRadius: 25,
-        width: '100%',
+    bottomIcons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
         alignItems: 'center',
         marginBottom: 10,
     },
-    loginText: {
+    rightPanel: {
+        flex: 1,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    logoSaintMartin: {
+        width: 200,
+        height: 100,
+        resizeMode: 'contain',
+        position: 'absolute',
+        top: 40,
+        alignSelf: 'center',
+    },
+    loginBox: {
+        width: 400,
+
+  
+        padding: 40,
+       
+      
+
+        alignItems: 'center',
+    },
+    loginTitle: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        marginBottom: 30,
+        color: '#000',
+        textAlign: 'center',
+        fontFamily: 'Roboto',
+    },
+    label: {
+        alignSelf: 'flex-start',
+        fontSize: 16,
+        color: '#888',
+        marginBottom: 5,
+        marginTop: 15,
+        fontFamily: 'Roboto',
+    },
+    input: {
+        width: '100%',
+        height: 45,
+        borderColor: '#bdbdbd',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        marginBottom: 5,
+        fontSize: 16,
+        backgroundColor: '#f5f5f5',
+        color: '#000',
+        fontFamily: 'Roboto',
+    },
+    loginButton: {
+        backgroundColor: '#0a6d8a',
+        paddingVertical: 14,
+        borderRadius: 8,
+        width: '100%',
+        alignItems: 'center',
+        marginTop: 30,
+    },
+    loginButtonText: {
         color: 'white',
         fontWeight: 'bold',
-    },
-    forgotPassword: {
-        color: '#64b5f6',
-        marginBottom: 20,
-    },
-    footerText: {
-        textAlign: 'center',
-        color: '#777',
-        marginTop: 20,
-    },
-    linkText: {
-        color: '#42a5f5',
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontFamily: 'Roboto',
     },
 });
 

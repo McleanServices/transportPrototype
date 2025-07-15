@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import marigotTaxiRotationService from '../../../app/model/marigotTaxiRotationService';
+import marigotTaxiRotationService from '../../../app/(app)/model/marigotTaxiRotationService';
 
 interface EditMarigotTaxiRotationModalProps {
   modalVisible: boolean;

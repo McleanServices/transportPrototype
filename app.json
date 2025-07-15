@@ -38,8 +38,13 @@
           "backgroundColor": "#ffffff"
         }
       ],
+     ["expo-screen-orientation",
+        {
+          "initialOrientation": "LANDSCAPE"
+        }],
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

@@ -3,8 +3,8 @@ import { Text, View, TouchableOpacity, StyleSheet, FlatList, Pressable } from "r
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; 
 import { SQLiteProvider } from 'expo-sqlite';
 import { useRouter } from 'expo-router';
-import { AirportTaxiRotationData } from '../../model/airportTaxiRotationService';
-import * as airportTaxiRotationController from '../../controller/airportTaxiRotationController';
+import { AirportTaxiRotationData } from './../model/airportTaxiRotationService';
+import * as airportTaxiRotationController from './../controller/airportTaxiRotationController';
 
 import AirportTaxiRotationModal from '../../../components/modals/create/airportTaxiRotationModal';
 import EditAirportTaxiRotationModal from '../../../components/modals/update/editAirportTaxiRotationModal';

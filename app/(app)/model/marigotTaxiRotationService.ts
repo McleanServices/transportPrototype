@@ -15,7 +15,7 @@ export interface MarigotTaxiRotationData {
 
 class MarigotTaxiRotationService {
   private dbName: string = "transport.db";
-  private tableName: string = "marigot_taxi_rotations";
+  private tableName: string = "marigot_taxi_rotation";
   private db: SQLite.SQLiteDatabase | null = null;
   private operationQueue: Promise<void> = Promise.resolve();
 
@@ -41,6 +41,7 @@ class MarigotTaxiRotationService {
       await tx.execAsync(`
         CREATE TABLE IF NOT EXISTS ${this.tableName} (
           marigot_taxi_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          order_number INTEGER NOT NULL,
           taxi_id INTEGER NOT NULL,
           boat_name TEXT,
           other_transport TEXT,

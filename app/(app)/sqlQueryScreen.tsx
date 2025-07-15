@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, ScrollView } from 'react-native';
-import airportTaxiRotationService from '../model/airportTaxiRotationService';
-import busRotationService from '../model/busRotationService';
+import airportTaxiRotationService from './model/airportTaxiRotationService';
+import busRotationService from './model/busRotationService';
 
 export default function SQLQueryScreen() {
   const [query, setQuery] = useState('');

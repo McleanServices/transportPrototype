@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, FlatList } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import busRotationService from '../../../app/model/busRotationService';
+import busRotationService from '../../../app/(app)/model/busRotationService';
 import { router } from 'expo-router';
 interface EditBusRotationModalProps {
   modalVisible: boolean;
@@ -35,6 +35,7 @@ const EditBusRotationModal: React.FC<EditBusRotationModalProps> = ({ modalVisibl
 
   const [isArrivalTimePickerVisible, setArrivalTimePickerVisibility] = useState(false);
   const [isDepartureTimePickerVisible, setDepartureTimePickerVisibility] = useState(false);
+  const [isPassengersPickerVisible, setPassengersPickerVisible] = useState(false);
 
   const handleInputChange = (name: string, value: any) => {
     setEditData({ ...editData, [name]: value });
@@ -176,13 +177,43 @@ const EditBusRotationModal: React.FC<EditBusRotationModalProps> = ({ modalVisibl
                     </View>
                     <View style={styles.inputContainer}>
                       <Text style={styles.label}>N PASSAGERS</Text>
-                      <TextInput
+                      <TouchableOpacity
                         style={styles.input}
-                        placeholder="N PASSAGERS"
-                        value={editData.passengers}
-                        onChangeText={(value) => handleInputChange('passengers', value)}
-                        keyboardType="numeric"
-                      />
+                        onPress={() => setPassengersPickerVisible(true)}
+                      >
+                        <Text>
+                          {editData.passengers ? editData.passengers : 'Sélectionner'}
+                        </Text>
+                      </TouchableOpacity>
+                      <Modal
+                        visible={isPassengersPickerVisible}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setPassengersPickerVisible(false)}
+                      >
+                        <TouchableWithoutFeedback onPress={() => setPassengersPickerVisible(false)}>
+                          <View style={styles.pickerModalOverlay}>
+                            <View style={styles.pickerModalContent}>
+                              <Text style={styles.pickerTitle}>Sélectionner le nombre de passagers</Text>
+                              <FlatList
+                                data={Array.from({ length: 15 }, (_, i) => (i + 1).toString())}
+                                keyExtractor={(item) => item}
+                                renderItem={({ item }) => (
+                                  <TouchableOpacity
+                                    style={styles.pickerItem}
+                                    onPress={() => {
+                                      handleInputChange('passengers', item);
+                                      setPassengersPickerVisible(false);
+                                    }}
+                                  >
+                                    <Text style={styles.pickerItemText}>{item}</Text>
+                                  </TouchableOpacity>
+                                )}
+                              />
+                            </View>
+                          </View>
+                        </TouchableWithoutFeedback>
+                      </Modal>
                     </View>
                   </View>
                   <Text style={[styles.label, { marginTop: 15 }]}>OBSERVATIONS/REMARQUES</Text>
@@ -256,7 +287,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   input: {
-    height: 40,
+    height: 40, 
     borderColor: 'gray',
     borderWidth: 1,
     marginBottom: 15,
@@ -290,6 +321,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginTop: 10,
+  },
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: 250,
+    maxHeight: 350,
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  pickerItem: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  pickerItemText: {
+    fontSize: 16,
   },
 });
 
