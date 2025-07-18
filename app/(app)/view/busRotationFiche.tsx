@@ -175,11 +175,12 @@ export default function BusRotationFiche() {
     const isHovered = hoveredRow === index;
 
     // Check if required fields are missing (except observations)
-    const isIncomplete =
-      !item.exploitants ||
-      !item.arrival_time ||
-      !item.departure_time ||
-      !item.passenger_count;
+    const missingFields: string[] = [];
+    if (!item.exploitants) missingFields.push("N° exploitants");
+    if (!item.arrival_time) missingFields.push("Heure d'arrivée");
+    if (!item.departure_time) missingFields.push("Heure de départ");
+    if (!item.passenger_count) missingFields.push("Nombre de passagers");
+    const isIncomplete = missingFields.length > 0;
 
     return (
       <Pressable
@@ -187,7 +188,7 @@ export default function BusRotationFiche() {
           styles.row,
           isSelected && styles.selectedRow,
           isHovered && styles.hoveredRow,
-          isIncomplete && styles.incompleteRow, // highlight incomplete
+          isIncomplete && styles.incompleteRow,
         ]}
         onPress={() => setSelectedRow(isSelected ? null : index)}
         onHoverIn={() => setHoveredRow(index)}
@@ -214,6 +215,22 @@ export default function BusRotationFiche() {
         </Text>
         <Text style={styles.cell}>{item.passenger_count}</Text>
         <Text style={styles.cell}>{item.observations || "—"}</Text>
+        {/* Warning button for incomplete row */}
+        {isIncomplete && (
+          <TouchableOpacity
+            style={styles.rowWarningButton}
+            onPress={() => {
+              setRowWarningMessage(
+                `Champs manquants : ${missingFields.join(", ")}`
+              );
+              setRowWarningVisible(true);
+            }}
+          >
+            <View style={styles.rowWarningCircle}>
+              <Text style={styles.rowWarningMark}>?</Text>
+            </View>
+          </TouchableOpacity>
+        )}
       </Pressable>
     );
   };
@@ -246,6 +263,10 @@ export default function BusRotationFiche() {
   };
 
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [warningVisible, setWarningVisible] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
+  const [rowWarningVisible, setRowWarningVisible] = useState(false);
+  const [rowWarningMessage, setRowWarningMessage] = useState("");
 
   return (
     <View style={styles.container}>
@@ -608,6 +629,54 @@ export default function BusRotationFiche() {
           </View>
         </View>
       </Modal>
+
+      {/* Warning Modal */}
+      <Modal
+        visible={warningVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setWarningVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.warningModalContent}>
+            <Text style={styles.modalTitle}>Avertissement</Text>
+            <Text style={{ marginBottom: 20, textAlign: "center" }}>
+              {warningMessage}
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setWarningVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Row Warning Modal */}
+      <Modal
+        visible={rowWarningVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setRowWarningVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModalContent}>
+            <Text style={styles.modalTitle}>Problème avec la ligne</Text>
+            <Text style={{ marginBottom: 20, textAlign: "center" }}>
+              {rowWarningMessage}
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => setRowWarningVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -775,6 +844,14 @@ const styles = StyleSheet.create({
     elevation: 8,
     alignItems: "center",
   },
+  warningModalContent: {
+    width: "85%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    elevation: 8,
+    alignItems: "center",
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -818,5 +895,24 @@ const styles = StyleSheet.create({
   },
   incompleteRow: {
     backgroundColor: "#FFF3CD", // light yellow to indicate missing data
+  },
+  rowWarningButton: {
+    marginLeft: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  rowWarningCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#EB5757",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  rowWarningMark: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+    lineHeight: 16,
   },
 });
