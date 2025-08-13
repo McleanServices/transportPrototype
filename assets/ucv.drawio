@@ -1,0 +1,102 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15" version="28.1.0">
+  <diagram name="Page-1" id="Din36Y6VB1YhQF9763l2">
+    <mxGraphModel dx="1340" dy="1607" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="RleppIVugxxmfQeVTa5x-1" value="Agent" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="390" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-2" value="" style="endArrow=classic;html=1;rounded=0;fontSize=12;startSize=8;endSize=8;curved=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="RleppIVugxxmfQeVTa5x-3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="80" y="440" as="sourcePoint" />
+            <mxPoint x="240" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-7" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startArrow=classic;startFill=1;endArrow=none;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-3" target="RleppIVugxxmfQeVTa5x-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-3" value="&lt;div style=&quot;text-align: start;&quot;&gt;&lt;i&gt;ConsulterLesRotations&lt;/i&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="190" y="280" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-18" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=12;startSize=8;endSize=8;dashed=1;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-4" target="RleppIVugxxmfQeVTa5x-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-4" value="&lt;div style=&quot;text-align: start;&quot;&gt;&lt;i&gt;S&#39;authentifier&lt;/i&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="280" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-5" value="&lt;div style=&quot;text-align: start;&quot;&gt;&lt;i&gt;ConsulterPowerBi&amp;nbsp;&lt;/i&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="575" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-9" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-3" target="RleppIVugxxmfQeVTa5x-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-6" value="&lt;div style=&quot;text-align: start;&quot;&gt;&lt;i&gt;AjouterUneRotation&lt;/i&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="160" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-8" value="&amp;lt;&amp;lt;Extends&amp;gt;&amp;gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-45;" vertex="1" parent="1">
+          <mxGeometry x="310" y="210" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-10" value="&amp;lt;&amp;lt;Includes&amp;gt;&amp;gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=0;" vertex="1" parent="1">
+          <mxGeometry x="449.9998051533947" y="279.9998051533946" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-12" value="&lt;div style=&quot;text-align: start;&quot;&gt;&lt;i&gt;AjouterUneRotation&lt;/i&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="185" y="70" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-13" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;fontSize=12;startArrow=classic;startFill=1;endArrow=none;endFill=0;strokeWidth=1;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-3" target="RleppIVugxxmfQeVTa5x-12">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="220" y="250" as="sourcePoint" />
+            <mxPoint x="325" y="160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-14" value="&amp;lt;&amp;lt;Extends&amp;gt;&amp;gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-90;" vertex="1" parent="1">
+          <mxGeometry x="209.99980515339468" y="199.99980515339465" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-17" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-15" target="RleppIVugxxmfQeVTa5x-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-21" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-15" target="RleppIVugxxmfQeVTa5x-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-26" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-15" target="RleppIVugxxmfQeVTa5x-25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-15" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="580" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-19" value="&amp;lt;&amp;lt;Includes&amp;gt;&amp;gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-30;" vertex="1" parent="1">
+          <mxGeometry x="500" y="470" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-20" value="&lt;i&gt;ConsulterAudit&lt;/i&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="710" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-23" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=1;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-22" target="RleppIVugxxmfQeVTa5x-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-22" value="&lt;i&gt;Historique de&amp;nbsp;connexion&lt;/i&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="880" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-24" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=12;startSize=8;endSize=8;dashed=1;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="360" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-25" value="&lt;div style=&quot;text-align: start;&quot;&gt;&lt;i&gt;DemandeAjoutAgent&lt;/i&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="10" y="770" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-27" value="&amp;lt;&amp;lt;Includes&amp;gt;&amp;gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-45;" vertex="1" parent="1">
+          <mxGeometry x="440.00076211353314" y="580.0003810567666" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-28" value="&lt;div style=&quot;text-align: start;&quot;&gt;&lt;i&gt;SupprimmerUneRotation&lt;/i&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="5" y="70" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-29" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;dashed=1;" edge="1" parent="1" source="RleppIVugxxmfQeVTa5x-28" target="RleppIVugxxmfQeVTa5x-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RleppIVugxxmfQeVTa5x-30" value="&amp;lt;&amp;lt;Extends&amp;gt;&amp;gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=60;" vertex="1" parent="1">
+          <mxGeometry x="90" y="190" width="60" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
