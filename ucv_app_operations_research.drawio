@@ -111,7 +111,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="zN2KZptlS6jGwo62BWdL" name="Page-2">
-    <mxGraphModel dx="1358" dy="836" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1501" dy="924" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -521,6 +521,24 @@
         </mxCell>
         <mxCell id="7DfY2xv_rvniL1FtIvhc-47" value="8" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="2340" y="935" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7DfY2xv_rvniL1FtIvhc-49" value="Niveau 1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="1160" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7DfY2xv_rvniL1FtIvhc-50" value="Niveau 2" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="1160" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7DfY2xv_rvniL1FtIvhc-51" value="Niveau 3" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1740" y="1160" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7DfY2xv_rvniL1FtIvhc-52" value="Niveau 4" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1950" y="1160" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7DfY2xv_rvniL1FtIvhc-53" value="Niveau 5" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2170" y="1160" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7DfY2xv_rvniL1FtIvhc-54" value="Niveau 6" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2431" y="1160" width="60" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
